@@ -1,0 +1,18 @@
+<html>
+	<head>
+		<title>Space Game 3D</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+		<script src="/socket.io/socket.io.js"></script>
+	</head>
+	<body>
+		<script>
+			// Stop logging image resize warnings...
+			const originalWarn = console.warn.bind( console )
+			console.warn = (text) => !text.includes('THREE') && originalWarn(text);
+		</script>
+		<script src="dist/bundle.js"></script>
+	</body>
+</html>
