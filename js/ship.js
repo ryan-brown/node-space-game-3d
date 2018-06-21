@@ -1,7 +1,7 @@
 const THREE = require('three');
 
 class Ship {
-    constructor(pos = new THREE.Vector3(), vel = new THREE.Vector3(), rotateVel = new THREE.Vector3(), quaternion = new THREE.Quaternion(), keysPressed = []) {
+    constructor(pos = new THREE.Vector3(), vel = new THREE.Vector3(), rotateVel = new THREE.Vector3(), quaternion = new THREE.Quaternion(), score = 0, keysPressed = []) {
         this.pos = pos;
         this.vel = vel;
         this.rotateVel = rotateVel;
@@ -13,6 +13,16 @@ class Ship {
 
         this.rotateAccel = Math.PI / 2;
         this.maxRotateVel = Math.PI / 4;
+
+        this.score = score;
+    }
+
+    static randomShip() {
+        const randX = 500 * Math.random() - 250;
+        const randY = 500 * Math.random() - 250;
+        const randZ = 500 * Math.random() - 250;
+
+        return new Ship(new THREE.Vector3(randX, randY, randZ));
     }
 
     rotateShip(x, y, z, w) {
@@ -22,13 +32,7 @@ class Ship {
         this.quaternion = currentQuaternion;
     }
 
-    //87: w
-    //83: s
-    //65: a
-    //68: d
-    //81: q
-    //69: e
-    //32: space
+    // 87:w 83:s 65:a 68:d 81:q 69:e 32:space
     update(dt) {
         if (this.keysPressed.includes(87) && !this.keysPressed.includes(83)) this.rotateVel.x += this.rotateAccel * dt;
         else if (this.keysPressed.includes(83) && !this.keysPressed.includes(87)) this.rotateVel.x -= this.rotateAccel * dt;
@@ -60,17 +64,26 @@ class Ship {
     }
 
     serialize() {
-        return [this.pos.x, this.pos.y, this.pos.z, this.vel.x, this.vel.y, this.vel.z, this.rotateVel.x, this.rotateVel.y, this.rotateVel.z, this.quaternion.x, this.quaternion.y, this.quaternion.z, this.quaternion.w, this.keysPressed];
+        let shipData = "";
+        shipData += `${this.pos.x.toFixed(3)},${this.pos.y.toFixed(3)},${this.pos.z.toFixed(3)},`;
+        shipData += `${this.vel.x.toFixed(3)},${this.vel.y.toFixed(3)},${this.vel.z.toFixed(3)},`;
+        shipData += `${this.rotateVel.x.toFixed(3)},${this.rotateVel.y.toFixed(3)},${this.rotateVel.z.toFixed(3)},`;
+        shipData += `${this.quaternion.x.toFixed(3)},${this.quaternion.y.toFixed(3)},${this.quaternion.z.toFixed(3)},${this.quaternion.w.toFixed(3)},`;
+        shipData += this.score;
+        return [shipData, this.keysPressed];
     }
 
     static deserialize(data) {
-        let pos = new THREE.Vector3(data[0], data[1], data[2]);
-        let vel = new THREE.Vector3(data[3], data[4], data[5]);
-        let rotateVel = new THREE.Vector3(data[6], data[7], data[8]);
-        let quaternion = new THREE.Quaternion(data[9], data[10], data[11], data[12]);
-        let keysPressed = data[13];
+        let shipData = data[0].split(",").map(v => parseFloat(v));
+        let pos = new THREE.Vector3(shipData[0], shipData[1], shipData[2]);
+        let vel = new THREE.Vector3(shipData[3], shipData[4], shipData[5]);
+        let rotateVel = new THREE.Vector3(shipData[6], shipData[7], shipData[8]);
+        let quaternion = new THREE.Quaternion(shipData[9], shipData[10], shipData[11], shipData[12]);
+        let score = shipData[13];
 
-        return new Ship(pos, vel, rotateVel, quaternion, keysPressed);
+        let keysPressed = data[1];
+
+        return new Ship(pos, vel, rotateVel, quaternion, score, keysPressed);
     }
 }
 

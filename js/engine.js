@@ -15,7 +15,7 @@ class Engine {
     }
 
     addShip(playerId) {
-        this.ships[playerId] = new Ship();
+        this.ships[playerId] = Ship.randomShip();
     }
 
     removeShip(playerId) {
@@ -35,7 +35,7 @@ class Engine {
 
     fire(playerId) {
         let ship = this.ships[playerId];
-        let vel = ship.vel.clone().add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(ship.quaternion.clone())).multiplyScalar(200));
+        let vel = ship.vel.clone().add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(ship.quaternion.clone())).multiplyScalar(500));
 
         this.bullets[this.currentBulletId] = new Bullet(ship.pos.clone(), vel, playerId);
         this.newBullets.push(this.currentBulletId);
@@ -56,10 +56,12 @@ class Engine {
             }
 
             for (const [shipId, ship] of Object.entries(this.ships)) {
-                //console.log(bullet.pos.clone().sub(ship.pos.clone()));
-                if ((bullet.pos.clone().sub(ship.pos.clone())).length() <= 3 && shipId != bullet.playerId) {
-                    //this.removedBullets.push(bulletId)
-                    this.ships[shipId] = new Ship();
+                if ((bullet.pos.clone().sub(ship.pos.clone())).length() <= 10 && shipId != bullet.playerId) {
+                    this.ships[bullet.playerId].score += 1;
+                    this.removedBullets.push(bulletId)
+                    delete this.bullets[bulletId];
+                    this.ships[shipId] = Ship.randomShip();
+                    break;
                 }
             }
         }
@@ -111,7 +113,9 @@ class Engine {
     updateSerialize() {
         let newBullets = {};
         for (let bulletId of this.newBullets) {
-            newBullets[bulletId] = this.bullets[bulletId].serialize();
+            if (this.bullets.hasOwnProperty(bulletId)) {
+                newBullets[bulletId] = this.bullets[bulletId].serialize();
+            }
         }
 
         let updateShips = {};

@@ -14,12 +14,16 @@ class Bullet {
     }
 
     serialize() {
-        return [this.pos.x, this.pos.y, this.pos.z, this.vel.x, this.vel.y, this.vel.z];
+        let bulletData = "";
+        bulletData += `${this.pos.x.toFixed(3)},${this.pos.y.toFixed(3)},${this.pos.z.toFixed(3)},`;
+        bulletData += `${this.vel.x.toFixed(3)},${this.vel.y.toFixed(3)},${this.vel.z.toFixed(3)}`;
+        return bulletData;
     }
 
     static deserialize(data) {
-        let pos = new THREE.Vector3(data[0], data[1], data[2]);
-        let vel = new THREE.Vector3(data[3], data[4], data[5]);
+        let bulletData = data.split(",").map(v => parseFloat(v));
+        let pos = new THREE.Vector3(bulletData[0], bulletData[1], bulletData[2]);
+        let vel = new THREE.Vector3(bulletData[3], bulletData[4], bulletData[5]);
 
         return new Bullet(pos, vel)
     }

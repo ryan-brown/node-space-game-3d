@@ -1,20 +1,11 @@
-var express = require('express');
-var app = express();
-var server = require('http').Server(app);
-var io = require('socket.io').listen(server);
+const port = process.env.PORT || 8090;
+
+var http = require('http').createServer().listen(port, function() {
+    console.log('Game server listening on port ' + port);
+});
+var io = require('socket.io').listen(http);
 
 var Engine = require('./js/engine.js');
-
-app.use('/dist', express.static(__dirname + '/dist'));
-app.use('/images', express.static(__dirname + '/images'));
-
-app.get('/', function(req, res) {
-    res.sendFile(__dirname + '/index.html');
-});
-
-server.listen(8090, function() {
-    console.log('Listening on ' + server.address().port);
-});
 
 let engine = new Engine();
 
@@ -41,11 +32,12 @@ io.on('connection', function(socket) {
     });
 });
 
-let ENGINE_FPS = 50;
+let ENGINE_FPS = 64;
 let lastTime = new Date().getTime();
 setInterval(function() {
     const now = new Date().getTime();
     const dt = (now - lastTime) / 1000;
+
     lastTime = now;
 
     engine.update(dt);

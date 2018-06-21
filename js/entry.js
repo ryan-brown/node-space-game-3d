@@ -1,6 +1,6 @@
 const Renderer = require('./renderer.js');
 
-const socket = io.connect("http://10.4.0.51:8090");
+const socket = io.connect("http://localhost:8090");
 
 let keysPressed = {};
 let renderer = new Renderer();

@@ -57,6 +57,7 @@ class Renderer {
         this.sceneHUD.add(plane);
 
         this.crosshair = new THREE.Vector2(0, 0);
+        this.lastDts = [0,0,0,0,0,0,0,0,0,0];
     }
 
     renderSkybox() {
@@ -105,10 +106,6 @@ class Renderer {
         this.initBullets(data[2]);
         this.initShips(data[3]);
 
-        console.log(this.playerId);
-        console.log(this.bullets);
-        console.log(this.ships);
-
         this.lastTime = 0;
         this.renderLoop(0);
     }
@@ -151,7 +148,7 @@ class Renderer {
     newShip(shipId, shipData) {
         let ship = Ship.deserialize(shipData);
 
-        const geometry = new THREE.TetrahedronGeometry(3);
+        const geometry = new THREE.OctahedronGeometry(10);
         const material = new THREE.MeshLambertMaterial({
             color: 0x00ff00
         });
@@ -263,7 +260,30 @@ class Renderer {
         return "{" + quaternion._x.toFixed(2) + ", " + quaternion._y.toFixed(2) + ", " + quaternion._z.toFixed(2) + ", " + quaternion._w.toFixed(2) + "}";
     }
 
-    renderHUD() {
+    renderScoreboard() {
+        this.hudContext.textBaseline = "top";
+
+        this.hudContext.fillText("Scoreboard", 5, 5);
+        this.hudContext.fillText(this.playerId + "(you): " + Math.round(this.myShip.score), 5, 25);
+
+        let currentHeight = 45;
+        for (const [shipId, ship] of Object.entries(this.ships)) {
+            this.hudContext.fillText(shipId + ": " + Math.round(ship.score), 5, currentHeight);
+            currentHeight += 20;
+        }
+    }
+
+    renderDebug(fps) {
+        this.hudContext.textBaseline = "bottom";
+
+        this.hudContext.fillText("FPS: " + Math.round(fps), 5, this.hudCanvas.height - 85);
+        this.hudContext.fillText("Postition: " + this.vectorToString(this.myShip.pos), 5, this.hudCanvas.height - 65);
+        this.hudContext.fillText("Velocity: " + this.vectorToString(this.myShip.vel), 5, this.hudCanvas.height - 45);
+        this.hudContext.fillText("Rotation Velocity: " + this.vectorToString(this.myShip.rotateVel), 5, this.hudCanvas.height - 25);
+        this.hudContext.fillText("Orientation: " + this.quaternionToString(this.myShip.quaternion), 5, this.hudCanvas.height - 5);
+    }
+
+    renderHUD(fps) {
         this.hudContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
         this.renderCrosshair();
         this.hudTexture.needsUpdate = true;
@@ -271,13 +291,9 @@ class Renderer {
         this.hudContext.font = "16px Arial";
         this.hudContext.fillStyle = "white";
         this.hudContext.textAlign = "start";
-        this.hudContext.textBaseline = "bottom";
 
-        // this.hudContext.fillText("FPS: " + Math.round(this.fps), 5, this.hudCanvas.height - 85);
-        this.hudContext.fillText("Postition: " + this.vectorToString(this.myShip.pos), 5, this.hudCanvas.height - 65);
-        this.hudContext.fillText("Velocity: " + this.vectorToString(this.myShip.vel), 5, this.hudCanvas.height - 45);
-        this.hudContext.fillText("Rotation Velocity: " + this.vectorToString(this.myShip.rotateVel), 5, this.hudCanvas.height - 25);
-        this.hudContext.fillText("Orientation: " + this.quaternionToString(this.myShip.quaternion), 5, this.hudCanvas.height - 5);
+        this.renderScoreboard();
+        this.renderDebug(fps);
 
         this.renderer.render(this.sceneHUD, this.cameraHUD);
     }
@@ -286,6 +302,9 @@ class Renderer {
         requestAnimationFrame((timestamp) => this.renderLoop(timestamp));
         const dt = (ts - this.lastTime) / 1000;
         this.lastTime = ts;
+        this.lastDts.shift();
+        this.lastDts.push(dt);
+        let fps = this.lastDts.length / this.lastDts.reduce((sum, dt) => sum + dt);
 
         for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
             asteroid.update(dt);
@@ -306,7 +325,7 @@ class Renderer {
         this.myShip.update(dt);
 
         this.render3D();
-        this.renderHUD();
+        this.renderHUD(fps);
     }
 }
 
