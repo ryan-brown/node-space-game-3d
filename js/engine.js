@@ -4,75 +4,70 @@ const Bullet = require('./bullet.js');
 const Asteroid = require('./asteroid.js');
 
 class Engine {
-	constructor() {
-		this.ships = {};
-		this.bullets = {};
+    constructor() {
+        this.ships = {};
+        this.bullets = {};
         this.currentBulletId = 0;
-	    this.asteroids = this.generateAsteroids(2000, 2000, 5, 50, 0.1, 10, Math.PI/4);
-	}
+        this.asteroids = this.generateAsteroids(2000);
 
-	addShip(playerId) {
-		this.ships[playerId] = new Ship(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Quaternion());
+        this.newBullets = [];
+        this.removedBullets = [];
     }
 
-	removeShip(playerId) {
+    addShip(playerId) {
+        this.ships[playerId] = new Ship();
+    }
+
+    removeShip(playerId) {
         delete this.ships[playerId];
-        delete this.bullets[playerId];
-	}
+    }
 
-	generateAsteroids(n, maxDist, rMin, rMax, velMin, velMax, maxAngle) {
-		let asteroids = {}
+    generateAsteroids(n) {
+        let asteroids = {}
         let currentId = 0;
-		for (let i = 0; i < n; i++) {
-		  const randX = 2*maxDist*Math.random() - maxDist;
-		  const randY = 2*maxDist*Math.random() - maxDist;
-		  const randZ = 2*maxDist*Math.random() - maxDist;
-		  const pos = new THREE.Vector3(randX, randY, randZ)
+        for (let i = 0; i < n; i++) {
+            asteroids[currentId] = Asteroid.generateRandom(2000, 5, 50, 0.1, 10, Math.PI / 4);
+            currentId++;
+        }
 
-		  const r = (rMax - rMin)*Math.random() + rMin;
-
-		  const randVelX = (velMax - velMin)*Math.random() - velMin;
-		  const randVelY = (velMax - velMin)*Math.random() - velMin;
-		  const randVelZ = (velMax - velMin)*Math.random() - velMin;
-		  const vel = new THREE.Vector3(randVelX, randVelY, randVelZ)
-
-		  const randAxisX = Math.random();
-		  const randAxisY = Math.random();
-		  const randAxisZ = Math.random();
-		  const axis = (new THREE.Vector3(randVelX, randVelY, randVelZ)).normalize();
-
-		  const angle = 2*maxAngle*Math.random() - maxAngle;
-
-		  asteroids[currentId] = new Asteroid(pos, r, vel, axis, angle);
-          currentId++;
-		}
-
-		return asteroids;
-	}
+        return asteroids;
+    }
 
     fire(playerId) {
         let ship = this.ships[playerId];
-        let vel = ship.vel.clone().add(((new THREE.Vector3(0,0,-1)).applyQuaternion(ship.quaternion.clone())).multiplyScalar(500));
+        let vel = ship.vel.clone().add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(ship.quaternion.clone())).multiplyScalar(200));
 
-        this.bullets[this.currentBulletId] = new Bullet(playerId, ship.pos.clone(), vel);
+        this.bullets[this.currentBulletId] = new Bullet(ship.pos.clone(), vel, playerId);
+        this.newBullets.push(this.currentBulletId);
         this.currentBulletId++;
     }
 
-	update(dt) {
-	    for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
+    update(dt) {
+        for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
             asteroid.update(dt);
-		}
+        }
 
         for (const [bulletId, bullet] of Object.entries(this.bullets)) {
             bullet.update(dt);
             if (bullet.lifetime <= 0) {
+                this.removedBullets.push(bulletId);
                 delete this.bullets[bulletId];
+                continue;
+            }
+
+            for (const [shipId, ship] of Object.entries(this.ships)) {
+                //console.log(bullet.pos.clone().sub(ship.pos.clone()));
+                if ((bullet.pos.clone().sub(ship.pos.clone())).length() <= 3 && shipId != bullet.playerId) {
+                    //this.removedBullets.push(bulletId)
+                    this.ships[shipId] = new Ship();
+                }
             }
         }
 
         for (const [playerId, ship] of Object.entries(this.ships)) {
             ship.update(dt);
         }
+    }
 
         // Do collision later...
         // for (const [playerId, bullets] of Object.entries(this.bullets)) {
@@ -94,8 +89,38 @@ class Engine {
         //     }
         // }
 
-        
-	}
+    serialize(playerId) {
+        let asteroids = {};
+        for (let [asteroidId, asteroid] of Object.entries(this.asteroids)) {
+            asteroids[asteroidId] = asteroid.serialize();
+        }
+
+        let bullets = {};
+        for (let [bulletId, bullet] of Object.entries(this.bullets)) {
+            bullets[bulletId] = bullet.serialize();
+        }
+
+        let ships = {};
+        for (let [shipId, ship] of Object.entries(this.ships)) {
+            ships[shipId] = ship.serialize();
+        }
+
+        return [playerId, asteroids, bullets, ships];
+    }
+
+    updateSerialize() {
+        let newBullets = {};
+        for (let bulletId of this.newBullets) {
+            newBullets[bulletId] = this.bullets[bulletId].serialize();
+        }
+
+        let updateShips = {};
+        for (let [shipId, ship] of Object.entries(this.ships)) {
+            updateShips[shipId] = ship.serialize();
+        }
+
+        return [newBullets, this.removedBullets, updateShips];
+    }
 }
 
 module.exports = Engine;
