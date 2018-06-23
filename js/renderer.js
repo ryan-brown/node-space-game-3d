@@ -18,7 +18,7 @@ class Renderer {
         const height = window.innerHeight;
 
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 10000);
+        this.camera = new THREE.PerspectiveCamera(60, width / height, 0.25, 5000);
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(width, height);
         this.renderer.autoClear = false;
@@ -27,9 +27,7 @@ class Renderer {
         this.textures = {}
         this.loadTextures();
 
-        this.scene.add(new THREE.DirectionalLight(0xffffff, 1));
-        this.scene.add(new THREE.AmbientLight(0x222222));
-
+        this.renderWireSphere();
         this.renderSkybox();
     }
 
@@ -58,6 +56,16 @@ class Renderer {
 
         this.crosshair = new THREE.Vector2(0, 0);
         this.lastDts = [0,0,0,0,0,0,0,0,0,0];
+    }
+
+    renderWireSphere() {
+        const geometry = new THREE.SphereGeometry(2500, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+          color: 0x00ffff,
+          wireframe: true
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        this.scene.add(mesh);
     }
 
     renderSkybox() {
@@ -111,19 +119,23 @@ class Renderer {
     }
 
     newAsteroid(asteroidId, asteroidData) {
+        //console.log(asteroidData);
         let asteroid = Asteroid.deserialize(asteroidData);
+        console.log(asteroid);
 
         let r = asteroid.r;
-        let geometry = new THREE.IcosahedronGeometry(r, 1);
+        let geometry = new THREE.OctahedronGeometry(r, 1);
 
         for (var i = 0; i < geometry.vertices.length; i++) {
             geometry.vertices[i].x += (r / 3) * Math.random() - (r / 6);
             geometry.vertices[i].y += (r / 3) * Math.random() - (r / 6);
             geometry.vertices[i].z += (r / 3) * Math.random() - (r / 6);
         }
-        asteroid.mesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({
-            map: this.textures['asteroid']
-        }));
+
+        //const material = new THREE.MeshLambertMaterial({ map: this.textures['asteroid'] });
+        const material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+
+        asteroid.mesh = new THREE.Mesh(geometry, material);
         asteroid.mesh.position.copy(asteroid.pos);
         this.scene.add(asteroid.mesh);
 
@@ -133,10 +145,11 @@ class Renderer {
     newBullet(bulletId, bulletData) {
         let bullet = Bullet.deserialize(bulletData);
 
-        const geometry = new THREE.SphereGeometry(0.2)
+        const geometry = new THREE.TetrahedronGeometry(0.1)
         const material = new THREE.MeshBasicMaterial({
-            color: 0xcccc00
-        })
+            color: 0xffff00,
+            wireframe: true
+        });
 
         bullet.mesh = new THREE.Mesh(geometry, material);
         bullet.mesh.position.copy(bullet.pos);
@@ -148,9 +161,10 @@ class Renderer {
     newShip(shipId, shipData) {
         let ship = Ship.deserialize(shipData);
 
-        const geometry = new THREE.OctahedronGeometry(10);
-        const material = new THREE.MeshLambertMaterial({
-            color: 0x00ff00
+        const geometry = new THREE.ConeGeometry(10, 20, 8);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            wireframe: true
         });
 
         ship.mesh = new THREE.Mesh(geometry, material);
@@ -158,6 +172,14 @@ class Renderer {
         this.scene.add(ship.mesh);
 
         this.ships[shipId] = ship;
+    }
+
+    updateAsteroids(data) {
+        for (const [asteroidId, asteroidData] of Object.entries(data)) {
+            let newAsteroid = Asteroid.deserialize(asteroidData);
+            newAsteroid.mesh = this.asteroids[asteroidId].mesh;
+            this.asteroids[asteroidId] = newAsteroid;
+        }
     }
 
     updateShips(ships) {
@@ -170,7 +192,10 @@ class Renderer {
                 newShip.mesh = ship.mesh;
                 this.ships[shipId] = newShip;
 
-                this.ships[shipId].mesh.setRotationFromQuaternion(ship.quaternion);
+                let currentQuaternion = ship.quaternion.clone();
+                currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
+                this.ships[shipId].mesh.setRotationFromQuaternion(currentQuaternion);
+
                 this.ships[shipId].mesh.position.copy(ship.pos);
 
                 delete ships[shipId];
@@ -190,19 +215,32 @@ class Renderer {
             this.newBullet(bulletId, bullet);
         }
 
-        for (const bulletId of data[1]) {
+        for (const [asteroidId, asteroid] of Object.entries(data[1])) {
+            this.newAsteroid(asteroidId, asteroid);
+        }
+
+        for (const bulletId of data[2]) {
             this.scene.remove(this.bullets[bulletId].mesh);
             delete this.bullets[bulletId];
         }
 
-        this.updateShips(data[2]);
+        for (const asteroidId of data[3]) {
+            this.scene.remove(this.asteroids[asteroidId].mesh);
+            delete this.asteroids[asteroidId];
+        }
+
+        this.updateAsteroids(data[4]);
+
+        this.updateShips(data[5]);
     }
 
     mouseMove(event) {
         const mouseMoveVector = new THREE.Vector2(event.movementX, event.movementY);
         this.crosshair.add(mouseMoveVector);
 
-        if (this.crosshair.length() > 100) this.crosshair.normalize().multiplyScalar(100);
+        const maxHeight = this.hudCanvas.height / 10;
+
+        if (this.crosshair.length() > maxHeight) this.crosshair.normalize().multiplyScalar(maxHeight);
     }
 
     resizeWindow() {
@@ -232,7 +270,7 @@ class Renderer {
         this.hudContext.lineWidth = 2;
 
         this.hudContext.beginPath();
-        this.hudContext.arc(width / 2, height / 2, 100, 0, 2 * Math.PI);
+        this.hudContext.arc(width / 2, height / 2, height / 6, 0, 2 * Math.PI);
         this.hudContext.stroke();
         this.hudContext.closePath();
     }
@@ -276,15 +314,17 @@ class Renderer {
     renderDebug(fps) {
         this.hudContext.textBaseline = "bottom";
 
-        this.hudContext.fillText("FPS: " + Math.round(fps), 5, this.hudCanvas.height - 85);
-        this.hudContext.fillText("Postition: " + this.vectorToString(this.myShip.pos), 5, this.hudCanvas.height - 65);
-        this.hudContext.fillText("Velocity: " + this.vectorToString(this.myShip.vel), 5, this.hudCanvas.height - 45);
-        this.hudContext.fillText("Rotation Velocity: " + this.vectorToString(this.myShip.rotateVel), 5, this.hudCanvas.height - 25);
-        this.hudContext.fillText("Orientation: " + this.quaternionToString(this.myShip.quaternion), 5, this.hudCanvas.height - 5);
+        const height = this.hudCanvas.height;
+
+        this.hudContext.fillText("FPS: " + Math.round(fps), 5, height - 85);
+        this.hudContext.fillText("Postition: " + this.vectorToString(this.myShip.pos), 5, height - 65);
+        this.hudContext.fillText("Velocity: " + this.vectorToString(this.myShip.vel), 5, height - 45);
+        this.hudContext.fillText("Rotation Velocity: " + this.vectorToString(this.myShip.rotateVel), 5, height - 25);
+        this.hudContext.fillText("Orientation: " + this.quaternionToString(this.myShip.quaternion), 5, height - 5);
     }
 
     renderHUD(fps) {
-        this.hudContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        this.hudContext.clearRect(0, 0, this.hudCanvas.width, this.hudCanvas.height);
         this.renderCrosshair();
         this.hudTexture.needsUpdate = true;
 
@@ -318,7 +358,11 @@ class Renderer {
 
         for (const [playerId, ship] of Object.entries(this.ships)) {
             ship.update(dt);
-            ship.mesh.setRotationFromQuaternion(ship.quaternion);
+
+            let currentQuaternion = ship.quaternion.clone();
+            currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
+            this.ships[playerId].mesh.setRotationFromQuaternion(currentQuaternion);
+
             ship.mesh.position.copy(ship.pos);
         }
 

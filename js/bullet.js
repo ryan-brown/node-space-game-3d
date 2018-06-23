@@ -1,11 +1,21 @@
 const THREE = require('three');
+//const Ship = require('./ship.js');
 
 class Bullet {
-    constructor(pos, vel, playerId = "abc") {
+    constructor(pos, vel, playerId = "") {
         this.playerId = playerId;
         this.pos = pos;
         this.vel = vel;
         this.lifetime = 3;
+    }
+
+    static fromShip(playerId, ship) {
+        const pos = ship.pos.clone();
+        const shipVel = ship.vel.clone();
+        const quat = ship.quaternion.clone();
+        const vel = shipVel.add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(quat)).multiplyScalar(60));
+
+        return new Bullet(pos, vel, playerId);
     }
 
     update(dt) {

@@ -6,8 +6,9 @@ var http = require('http').createServer().listen(port, function() {
 var io = require('socket.io').listen(http);
 
 var Engine = require('./js/engine.js');
+var config = require('./js/config.js');
 
-let engine = new Engine();
+let engine = new Engine(config);
 
 io.on('connection', function(socket) {
     console.log('user connected');
@@ -22,8 +23,8 @@ io.on('connection', function(socket) {
         engine.ships[socket.id].keysPressed.push(data);
     });
 
-    socket.on('fire', function() {
-        engine.fire(socket.id);
+    socket.on('fire', function(data) {
+        engine.fire(socket.id, data);
     });
 
     socket.on('disconnect', function() {
@@ -46,4 +47,7 @@ setInterval(function() {
 
     engine.newBullets = [];
     engine.removedBullets = [];
+    engine.newAsteroids = [];
+    engine.updateAsteroids = [];
+    engine.removedAsteroids = [];
 }, 1000 / ENGINE_FPS);

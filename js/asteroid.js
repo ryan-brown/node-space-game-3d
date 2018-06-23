@@ -13,11 +13,12 @@ class Asteroid {
         this.pos.add(this.vel.clone().multiplyScalar(dt));
     }
 
-    static generateRandom(maxDist, rMin, rMax, velMin, velMax, maxAngle) {
+    static generateRandom(maxDist, rMin, rMax, velMin, velMax, startPos = new THREE.Vector3()) {
         const randX = 2 * maxDist * Math.random() - maxDist;
         const randY = 2 * maxDist * Math.random() - maxDist;
         const randZ = 2 * maxDist * Math.random() - maxDist;
         const pos = new THREE.Vector3(randX, randY, randZ)
+        const finalPos = startPos.add(pos);
 
         const r = (rMax - rMin) * Math.random() + rMin;
 
@@ -26,7 +27,7 @@ class Asteroid {
         const randVelZ = (velMax - velMin) * Math.random() - velMin;
         const vel = new THREE.Vector3(randVelX, randVelY, randVelZ)
 
-        return new Asteroid(pos, r, vel);
+        return new Asteroid(finalPos, r, vel);
     }
 
     serialize() {

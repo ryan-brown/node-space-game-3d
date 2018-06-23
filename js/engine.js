@@ -4,14 +4,21 @@ const Bullet = require('./bullet.js');
 const Asteroid = require('./asteroid.js');
 
 class Engine {
-    constructor() {
+    constructor(config) {
+        this.config = config;
         this.ships = {};
-        this.bullets = {};
+
         this.currentBulletId = 0;
+        this.bullets = {};
+        this.currentAsteroidId = 0;
         this.asteroids = this.generateAsteroids(2000);
 
         this.newBullets = [];
         this.removedBullets = [];
+
+        this.newAsteroids = [];
+        this.updateAsteroids = [];
+        this.removedAsteroids = [];
     }
 
     addShip(playerId) {
@@ -23,21 +30,39 @@ class Engine {
     }
 
     generateAsteroids(n) {
+        const maxDist = this.config["mapRadius"];
+        const rMin = this.config["randomAsteroid"]["rMin"];
+        const rMax = this.config["randomAsteroid"]["rMax"];
+        const velMin = this.config["randomAsteroid"]["velMin"];
+        const velMax = this.config["randomAsteroid"]["velMax"];
+
         let asteroids = {}
-        let currentId = 0;
         for (let i = 0; i < n; i++) {
-            asteroids[currentId] = Asteroid.generateRandom(2000, 5, 50, 0.1, 10, Math.PI / 4);
-            currentId++;
+            asteroids[this.currentAsteroidId] = Asteroid.generateRandom(maxDist, rMin, rMax, velMin, velMax);
+            this.currentAsteroidId++;
         }
 
         return asteroids;
     }
 
-    fire(playerId) {
-        let ship = this.ships[playerId];
-        let vel = ship.vel.clone().add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(ship.quaternion.clone())).multiplyScalar(500));
+    splitAsteroid(asteroid) {
+        const velMin = this.config["randomAsteroid"]["velMin"];
+        const velMax = this.config["randomAsteroid"]["velMax"];
 
-        this.bullets[this.currentBulletId] = new Bullet(ship.pos.clone(), vel, playerId);
+        const asteroid1 = Asteroid.generateRandom(asteroid.r, asteroid.r/3, asteroid.r/2, velMin, velMax, asteroid.pos);
+        const asteroid2 = Asteroid.generateRandom(asteroid.r, asteroid.r/3, asteroid.r/2, velMin, velMax, asteroid.pos);
+
+        this.asteroids[this.currentAsteroidId] = asteroid1;
+        this.newAsteroids.push(this.currentAsteroidId);
+        this.currentAsteroidId++;
+
+        this.asteroids[this.currentAsteroidId] = asteroid2;
+        this.newAsteroids.push(this.currentAsteroidId);
+        this.currentAsteroidId++;
+    }
+
+    fire(playerId, data) {
+        this.bullets[this.currentBulletId] = Bullet.fromShip(playerId, this.ships[playerId]);
         this.newBullets.push(this.currentBulletId);
         this.currentBulletId++;
     }
@@ -45,6 +70,17 @@ class Engine {
     update(dt) {
         for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
             asteroid.update(dt);
+
+            const r = this.config["mapRadius"];
+            if (asteroid.pos.length() > r) {
+                asteroid.pos.normalize().multiplyScalar(r);
+                asteroid.vel.multiplyScalar(-1);
+                this.updateAsteroids.push(asteroidId);
+            }
+        }
+
+        for (const [playerId, ship] of Object.entries(this.ships)) {
+            ship.update(dt);
         }
 
         for (const [bulletId, bullet] of Object.entries(this.bullets)) {
@@ -55,41 +91,34 @@ class Engine {
                 continue;
             }
 
+            let shipHit = false;
             for (const [shipId, ship] of Object.entries(this.ships)) {
                 if ((bullet.pos.clone().sub(ship.pos.clone())).length() <= 10 && shipId != bullet.playerId) {
                     this.ships[bullet.playerId].score += 1;
-                    this.removedBullets.push(bulletId)
+                    this.removedBullets.push(bulletId);
                     delete this.bullets[bulletId];
                     this.ships[shipId] = Ship.randomShip();
+                    shipHit = true;
+                    break;
+                }
+            }
+
+            if (shipHit) continue;
+
+            for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
+                if ((bullet.pos.clone().sub(asteroid.pos.clone())).length() <= asteroid.r) {
+                    if (asteroid.r > 3) {
+                        this.splitAsteroid(asteroid);
+                    }
+                    this.removedBullets.push(bulletId);
+                    this.removedAsteroids.push(asteroidId);
+                    delete this.bullets[bulletId];
+                    delete this.asteroids[asteroidId];
                     break;
                 }
             }
         }
-
-        for (const [playerId, ship] of Object.entries(this.ships)) {
-            ship.update(dt);
-        }
     }
-
-        // Do collision later...
-        // for (const [playerId, bullets] of Object.entries(this.bullets)) {
-        //     for (let i = bullets.length - 1; i >= 0; i--) {
-        //         let bullet = bullets[i]
-        //         bullet.update(dt);
-
-        //         if (bullet.lifetime <= 0) {
-        //             bullets.splice(i, 1);
-        //         } else {
-        //             for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
-        //                 if ((bullet.pos.clone().sub(asteroid.pos.clone())).length() <= asteroid.r) {
-        //                   bullets.splice(i, 1);
-        //                   delete this.asteroids[asteroidId];
-        //                   break;
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
 
     serialize(playerId) {
         let asteroids = {};
@@ -118,12 +147,23 @@ class Engine {
             }
         }
 
+        let newAsteroids = {};
+        for (let asteroidId of this.newAsteroids) {
+            console.log(this.asteroids[asteroidId]);
+            newAsteroids[asteroidId] = this.asteroids[asteroidId].serialize();
+        }
+
+        let updateAsteroids = {};
+        for (let asteroidId of this.updateAsteroids) {
+            updateAsteroids[asteroidId] = this.asteroids[asteroidId].serialize();
+        }
+
         let updateShips = {};
         for (let [shipId, ship] of Object.entries(this.ships)) {
             updateShips[shipId] = ship.serialize();
         }
 
-        return [newBullets, this.removedBullets, updateShips];
+        return [newBullets, newAsteroids, this.removedBullets, this.removedAsteroids, updateAsteroids, updateShips];
     }
 }
 
