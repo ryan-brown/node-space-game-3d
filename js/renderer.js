@@ -116,7 +116,7 @@ class Renderer {
         this.initShips(data[3]);
 
         this.lastTime = -1
-        requestAnimationFrame((ts) => this.renderLoop(ts));
+        requestAnimationFrame(this.renderLoop.bind(this));
     }
 
     newAsteroid(asteroidId, asteroidData) {
@@ -362,7 +362,7 @@ class Renderer {
     }
 
     renderLoop(ts) {
-        requestAnimationFrame((timestamp) => this.renderLoop(timestamp));
+        requestAnimationFrame(this.renderLoop.bind(this));
         if (this.lastTime == -1) this.lastTime = ts;
         else {
             const dt = (ts - this.lastTime) / 1000;
