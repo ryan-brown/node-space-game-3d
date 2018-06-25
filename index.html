@@ -13,6 +13,21 @@
 			const originalWarn = console.warn.bind( console )
 			console.warn = (text) => !text.includes('THREE') && originalWarn(text);
 		</script>
+		<div id="loginDiv">
+			<table>
+			  <tr>
+			    <td>Username</td>
+			    <td><input type="text" id="usernameField" /></td> 
+			  </tr>
+			  <tr>
+			    <td>Hue (0-360)</td>
+			    <td><input type="text" id="hueField" /></td>
+			  </tr>
+			  <tr colspan=2>
+			  <td><button id="startButton">Play</button></td>
+			  </tr>
+			</table>
+		</div>
 		<script src="dist/bundle.js"></script>
 	</body>
 </html>

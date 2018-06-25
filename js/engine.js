@@ -11,7 +11,7 @@ class Engine {
         this.currentBulletId = 0;
         this.bullets = {};
         this.currentAsteroidId = 0;
-        this.asteroids = this.generateAsteroids(2000);
+        this.asteroids = this.generateAsteroids(this.config["numOfAsteroids"]);
 
         this.newBullets = [];
         this.removedBullets = [];
@@ -21,8 +21,8 @@ class Engine {
         this.removedAsteroids = [];
     }
 
-    addShip(playerId) {
-        this.ships[playerId] = Ship.randomShip();
+    addShip(playerId, data) {
+        this.ships[playerId] = Ship.randomShip(data);
     }
 
     removeShip(playerId) {
@@ -49,8 +49,8 @@ class Engine {
         const velMin = this.config["randomAsteroid"]["velMin"];
         const velMax = this.config["randomAsteroid"]["velMax"];
 
-        const asteroid1 = Asteroid.generateRandom(asteroid.r, asteroid.r/3, asteroid.r/2, velMin, velMax, asteroid.pos);
-        const asteroid2 = Asteroid.generateRandom(asteroid.r, asteroid.r/3, asteroid.r/2, velMin, velMax, asteroid.pos);
+        const asteroid1 = Asteroid.generateRandom(asteroid.r, asteroid.r/3, asteroid.r/2, velMin, velMax, asteroid.pos.clone());
+        const asteroid2 = Asteroid.generateRandom(asteroid.r, asteroid.r/3, asteroid.r/2, velMin, velMax, asteroid.pos.clone());
 
         this.asteroids[this.currentAsteroidId] = asteroid1;
         this.newAsteroids.push(this.currentAsteroidId);
@@ -72,8 +72,8 @@ class Engine {
             asteroid.update(dt);
 
             const r = this.config["mapRadius"];
-            if (asteroid.pos.length() > r) {
-                asteroid.pos.normalize().multiplyScalar(r);
+            if (asteroid.pos.length() + asteroid.r > r) {
+                asteroid.pos.normalize().multiplyScalar(r-asteroid.r);
                 asteroid.vel.multiplyScalar(-1);
                 this.updateAsteroids.push(asteroidId);
             }
@@ -97,7 +97,7 @@ class Engine {
                     this.ships[bullet.playerId].score += 1;
                     this.removedBullets.push(bulletId);
                     delete this.bullets[bulletId];
-                    this.ships[shipId] = Ship.randomShip();
+                    this.ships[shipId] = Ship.randomShip({username: ship.username, hue: ship.hue});
                     shipHit = true;
                     break;
                 }
@@ -107,7 +107,7 @@ class Engine {
 
             for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
                 if ((bullet.pos.clone().sub(asteroid.pos.clone())).length() <= asteroid.r) {
-                    if (asteroid.r > 3) {
+                    if (asteroid.r > 10) {
                         this.splitAsteroid(asteroid);
                     }
                     this.removedBullets.push(bulletId);
@@ -149,7 +149,6 @@ class Engine {
 
         let newAsteroids = {};
         for (let asteroidId of this.newAsteroids) {
-            console.log(this.asteroids[asteroidId]);
             newAsteroids[asteroidId] = this.asteroids[asteroidId].serialize();
         }
 

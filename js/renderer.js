@@ -4,7 +4,8 @@ const Bullet = require('./bullet.js');
 const Asteroid = require('./asteroid.js');
 
 class Renderer {
-    constructor() {
+    constructor(config) {
+        this.config = config;
         this.ships = {};
         this.bullets = {};
         this.asteroids = {};
@@ -18,7 +19,7 @@ class Renderer {
         const height = window.innerHeight;
 
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(60, width / height, 0.25, 5000);
+        this.camera = new THREE.PerspectiveCamera(60, width / height, 0.25, 2*this.config["mapRadius"]);
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(width, height);
         this.renderer.autoClear = false;
@@ -59,7 +60,7 @@ class Renderer {
     }
 
     renderWireSphere() {
-        const geometry = new THREE.SphereGeometry(2500, 32, 32);
+        const geometry = new THREE.SphereGeometry(this.config["mapRadius"], 32, 32);
         const material = new THREE.MeshBasicMaterial({
           color: 0x00ffff,
           wireframe: true
@@ -69,7 +70,7 @@ class Renderer {
     }
 
     renderSkybox() {
-        const geometry = new THREE.CubeGeometry(10000, 10000, 10000);
+        const geometry = new THREE.SphereGeometry(2*this.config["mapRadius"], 32, 32);
         const material = new THREE.MeshBasicMaterial({
             map: this.textures['space']
         })
@@ -114,17 +115,15 @@ class Renderer {
         this.initBullets(data[2]);
         this.initShips(data[3]);
 
-        this.lastTime = 0;
-        this.renderLoop(0);
+        this.lastTime = -1
+        requestAnimationFrame((ts) => this.renderLoop(ts));
     }
 
     newAsteroid(asteroidId, asteroidData) {
-        //console.log(asteroidData);
         let asteroid = Asteroid.deserialize(asteroidData);
-        console.log(asteroid);
 
         let r = asteroid.r;
-        let geometry = new THREE.OctahedronGeometry(r, 1);
+        let geometry = new THREE.IcosahedronGeometry(r);
 
         for (var i = 0; i < geometry.vertices.length; i++) {
             geometry.vertices[i].x += (r / 3) * Math.random() - (r / 6);
@@ -132,7 +131,6 @@ class Renderer {
             geometry.vertices[i].z += (r / 3) * Math.random() - (r / 6);
         }
 
-        //const material = new THREE.MeshLambertMaterial({ map: this.textures['asteroid'] });
         const material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
 
         asteroid.mesh = new THREE.Mesh(geometry, material);
@@ -163,7 +161,7 @@ class Renderer {
 
         const geometry = new THREE.ConeGeometry(10, 20, 8);
         const material = new THREE.MeshBasicMaterial({
-            color: 0xff0000,
+            color: `hsl(${ship.hue}, 100%, 50%)`,
             wireframe: true
         });
 
@@ -255,24 +253,49 @@ class Renderer {
         this.hudCanvas.height = height;
     }
 
-    renderCrosshair() {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-
-        this.hudContext.fillStyle = 'red';
-
+    crosshairStroke(startX, startY, endX, endY) {
         this.hudContext.beginPath();
-        this.hudContext.arc(width / 2 + this.crosshair.x, height / 2 + this.crosshair.y, 3, 0, 2 * Math.PI);
-        this.hudContext.fill();
-        this.hudContext.closePath();
-
-        this.hudContext.strokeStyle = 'green';
-        this.hudContext.lineWidth = 2;
-
-        this.hudContext.beginPath();
-        this.hudContext.arc(width / 2, height / 2, height / 6, 0, 2 * Math.PI);
+        this.hudContext.moveTo(startX, startY);
+        this.hudContext.lineTo(endX, endY);
         this.hudContext.stroke();
         this.hudContext.closePath();
+    }
+
+    renderCrosshair() {
+        const centerX = window.innerWidth/2;
+        const centerY = window.innerHeight/2;
+
+        const size = Math.min(centerX, centerY)/50;
+
+        this.hudContext.strokeStyle = 'white';
+        this.hudContext.lineWidth = 3;
+
+        this.crosshairStroke(centerX + size, centerY, centerX + 4*size, centerY);
+        this.crosshairStroke(centerX - size, centerY, centerX - 4*size, centerY);
+        this.crosshairStroke(centerX, centerY + size, centerX, centerY + 4*size);
+        this.crosshairStroke(centerX, centerY - size, centerX, centerY - 4*size);
+
+        // this.hudContext.strokeStyle = 'red';
+        // this.hudContext.lineWidth = 1;
+
+        // this.crosshairStroke(centerX + size, centerY, centerX + 4*size, centerY);
+        // this.crosshairStroke(centerX - size, centerY, centerX - 4*size, centerY);
+        // this.crosshairStroke(centerX, centerY + size, centerX, centerY + 4*size);
+        // this.crosshairStroke(centerX, centerY - size, centerX, centerY - 4*size);
+
+        // this.hudContext.beginPath();
+        // //this.hudContext.arc(width / 2 + this.crosshair.x, height / 2 + this.crosshair.y, 3, 0, 2 * Math.PI);
+        // this.hudContext.arc(width / 2, height / 2, 3, 0, 2 * Math.PI);
+        // this.hudContext.fill();
+        // this.hudContext.closePath();
+
+        // this.hudContext.strokeStyle = 'green';
+        // this.hudContext.lineWidth = 2;
+
+        // this.hudContext.beginPath();
+        // this.hudContext.arc(width / 2, height / 2, height / 6, 0, 2 * Math.PI);
+        // this.hudContext.stroke();
+        // this.hudContext.closePath();
     }
 
     render3D() {
@@ -302,11 +325,11 @@ class Renderer {
         this.hudContext.textBaseline = "top";
 
         this.hudContext.fillText("Scoreboard", 5, 5);
-        this.hudContext.fillText(this.playerId + "(you): " + Math.round(this.myShip.score), 5, 25);
+        this.hudContext.fillText(this.myShip.username + "(you): " + Math.round(this.myShip.score), 5, 25);
 
         let currentHeight = 45;
         for (const [shipId, ship] of Object.entries(this.ships)) {
-            this.hudContext.fillText(shipId + ": " + Math.round(ship.score), 5, currentHeight);
+            this.hudContext.fillText(ship.username + ": " + Math.round(ship.score), 5, currentHeight);
             currentHeight += 20;
         }
     }
@@ -340,36 +363,40 @@ class Renderer {
 
     renderLoop(ts) {
         requestAnimationFrame((timestamp) => this.renderLoop(timestamp));
-        const dt = (ts - this.lastTime) / 1000;
-        this.lastTime = ts;
-        this.lastDts.shift();
-        this.lastDts.push(dt);
-        let fps = this.lastDts.length / this.lastDts.reduce((sum, dt) => sum + dt);
+        if (this.lastTime == -1) this.lastTime = ts;
+        else {
+            const dt = (ts - this.lastTime) / 1000;
+            this.lastTime = ts;
 
-        for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
-            asteroid.update(dt);
-            asteroid.mesh.position.copy(asteroid.pos);
+            this.lastDts.shift();
+            this.lastDts.push(dt);
+            let fps = this.lastDts.length / this.lastDts.reduce((sum, dt) => sum + dt);
+
+            for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
+                asteroid.update(dt);
+                asteroid.mesh.position.copy(asteroid.pos);
+            }
+
+            for (const [bulletId, bullet] of Object.entries(this.bullets)) {
+                bullet.update(dt);
+                bullet.mesh.position.copy(bullet.pos);
+            }
+
+            for (const [playerId, ship] of Object.entries(this.ships)) {
+                ship.update(dt);
+
+                let currentQuaternion = ship.quaternion.clone();
+                currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
+                this.ships[playerId].mesh.setRotationFromQuaternion(currentQuaternion);
+
+                ship.mesh.position.copy(ship.pos);
+            }
+
+            this.myShip.update(dt);
+
+            this.render3D();
+            this.renderHUD(fps);
         }
-
-        for (const [bulletId, bullet] of Object.entries(this.bullets)) {
-            bullet.update(dt);
-            bullet.mesh.position.copy(bullet.pos);
-        }
-
-        for (const [playerId, ship] of Object.entries(this.ships)) {
-            ship.update(dt);
-
-            let currentQuaternion = ship.quaternion.clone();
-            currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
-            this.ships[playerId].mesh.setRotationFromQuaternion(currentQuaternion);
-
-            ship.mesh.position.copy(ship.pos);
-        }
-
-        this.myShip.update(dt);
-
-        this.render3D();
-        this.renderHUD(fps);
     }
 }
 

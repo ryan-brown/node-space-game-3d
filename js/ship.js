@@ -1,28 +1,30 @@
 const THREE = require('three');
 
 class Ship {
-    constructor(pos = new THREE.Vector3(), vel = new THREE.Vector3(), rotateVel = new THREE.Vector3(), quaternion = new THREE.Quaternion(), score = 0, keysPressed = []) {
+    constructor(username = "", hue = 0, pos = new THREE.Vector3(), vel = new THREE.Vector3(), rotateVel = new THREE.Vector3(), quaternion = new THREE.Quaternion(), score = 0, keysPressed = []) {
+        this.username = username;
+        this.hue = hue;
         this.pos = pos;
         this.vel = vel;
         this.rotateVel = rotateVel;
         this.quaternion = quaternion;
         this.keysPressed = keysPressed;
 
-        this.accel = 45;
-        this.maxVel = 60;
+        this.accel = 100;
+        this.maxVel = 80;
 
-        this.rotateAccel = Math.PI / 2;
-        this.maxRotateVel = Math.PI / 4;
+        this.rotateAccel = Math.PI / 1.5;
+        this.maxRotateVel = Math.PI / 2;
 
         this.score = score;
     }
 
-    static randomShip() {
-        const randX = 500 * Math.random() - 250;
-        const randY = 500 * Math.random() - 250;
-        const randZ = 500 * Math.random() - 250;
+    static randomShip(data) {
+        const randX = 1000 * Math.random() - 500;
+        const randY = 1000 * Math.random() - 500;
+        const randZ = 1000 * Math.random() - 500;
 
-        return new Ship(new THREE.Vector3(randX, randY, randZ));
+        return new Ship(data["username"], data["hue"], new THREE.Vector3(randX, randY, randZ));
     }
 
     rotateShip(x, y, z, w) {
@@ -69,21 +71,24 @@ class Ship {
         shipData += `${this.vel.x.toFixed(3)},${this.vel.y.toFixed(3)},${this.vel.z.toFixed(3)},`;
         shipData += `${this.rotateVel.x.toFixed(3)},${this.rotateVel.y.toFixed(3)},${this.rotateVel.z.toFixed(3)},`;
         shipData += `${this.quaternion.x.toFixed(3)},${this.quaternion.y.toFixed(3)},${this.quaternion.z.toFixed(3)},${this.quaternion.w.toFixed(3)},`;
-        shipData += this.score;
-        return [shipData, this.keysPressed];
+        shipData += `${this.score},`;
+        return [this.username, this.hue, shipData, this.keysPressed];
     }
 
     static deserialize(data) {
-        let shipData = data[0].split(",").map(v => parseFloat(v));
+        let username = data[0];
+        let hue = data[1];
+
+        let shipData = data[2].split(",").map(v => parseFloat(v));
         let pos = new THREE.Vector3(shipData[0], shipData[1], shipData[2]);
         let vel = new THREE.Vector3(shipData[3], shipData[4], shipData[5]);
         let rotateVel = new THREE.Vector3(shipData[6], shipData[7], shipData[8]);
         let quaternion = new THREE.Quaternion(shipData[9], shipData[10], shipData[11], shipData[12]);
         let score = shipData[13];
 
-        let keysPressed = data[1];
+        let keysPressed = data[3];
 
-        return new Ship(pos, vel, rotateVel, quaternion, score, keysPressed);
+        return new Ship(username, hue, pos, vel, rotateVel, quaternion, score, keysPressed);
     }
 }
 

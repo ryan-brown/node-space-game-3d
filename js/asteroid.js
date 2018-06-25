@@ -5,29 +5,36 @@ class Asteroid {
         this.pos = pos;
         this.r = r;
         this.vel = vel;
-        // this.axis = axis;
-        // this.angle = angle;
     }
 
     update(dt) {
         this.pos.add(this.vel.clone().multiplyScalar(dt));
     }
 
-    static generateRandom(maxDist, rMin, rMax, velMin, velMax, startPos = new THREE.Vector3()) {
-        const randX = 2 * maxDist * Math.random() - maxDist;
-        const randY = 2 * maxDist * Math.random() - maxDist;
-        const randZ = 2 * maxDist * Math.random() - maxDist;
-        const pos = new THREE.Vector3(randX, randY, randZ)
-        const finalPos = startPos.add(pos);
+    static generateRandom(maxDist, rMin, rMax, velMin, velMax, pos = new THREE.Vector3()) {
+        let validPoint = false;
+        let randPos;
+        while (!validPoint) {
+            const randX = 2*maxDist*Math.random() - maxDist;
+            const randY = 2*maxDist*Math.random() - maxDist;
+            const randZ = 2*maxDist*Math.random() - maxDist;
 
-        const r = (rMax - rMin) * Math.random() + rMin;
+            if (randX*randX + randY*randY + randZ*randZ <= (maxDist-rMax)*(maxDist-rMax)) {
+                validPoint = true;
+                randPos = new THREE.Vector3(randX, randY, randZ);
+            }
+        }
+
+        pos.add(randPos);
+        
+        const radius = (rMax - rMin) * Math.random() + rMin;
 
         const randVelX = (velMax - velMin) * Math.random() - velMin;
         const randVelY = (velMax - velMin) * Math.random() - velMin;
         const randVelZ = (velMax - velMin) * Math.random() - velMin;
         const vel = new THREE.Vector3(randVelX, randVelY, randVelZ)
 
-        return new Asteroid(finalPos, r, vel);
+        return new Asteroid(pos, radius, vel);
     }
 
     serialize() {

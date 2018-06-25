@@ -1,10 +1,10 @@
 module.exports = {
-  mapRadius: 2500,
+  mapRadius: 1000,
+  numOfAsteroids: 500,
   randomAsteroid: {
     rMin: 5,
     rMax: 50,
-    velMin: 0,
-    velMax: 10
-  },
-
+    velMin: 5,
+    velMax: 25
+  }
 }
