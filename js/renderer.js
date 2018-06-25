@@ -115,7 +115,6 @@ class Renderer {
         this.initBullets(data[2]);
         this.initShips(data[3]);
 
-        this.lastTime = performance.now();
         requestAnimationFrame(this.renderLoop.bind(this));
     }
 
@@ -364,12 +363,15 @@ class Renderer {
     renderLoop(ts) {
         requestAnimationFrame(this.renderLoop.bind(this));
 
+        if (this.lastTime === undefined) {
+            this.lastTime = ts;
+        }
+
         const dt = (ts - this.lastTime) / 1000;
         this.lastTime = ts;
         this.lastDts.shift();
         this.lastDts.push(dt);
         let fps = this.lastDts.length / this.lastDts.reduce((sum, dt) => sum + dt);
-        console.log(ts, dt, this.lastTime);
 
         for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
             asteroid.update(dt);
