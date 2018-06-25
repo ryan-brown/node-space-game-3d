@@ -115,8 +115,7 @@ class Renderer {
         this.initBullets(data[2]);
         this.initShips(data[3]);
 
-        this.lastTime = -1
-        requestAnimationFrame((ts) => this.renderLoop(ts));
+        requestAnimationFrame(this.renderLoop.bind(this));
     }
 
     newAsteroid(asteroidId, asteroidData) {
@@ -362,41 +361,42 @@ class Renderer {
     }
 
     renderLoop(ts) {
-        requestAnimationFrame((timestamp) => this.renderLoop(timestamp));
-        if (this.lastTime == -1) this.lastTime = ts;
-        else {
-            const dt = (ts - this.lastTime) / 1000;
+        requestAnimationFrame(this.renderLoop.bind(this));
+
+        if (this.lastTime === undefined) {
             this.lastTime = ts;
-
-            this.lastDts.shift();
-            this.lastDts.push(dt);
-            let fps = this.lastDts.length / this.lastDts.reduce((sum, dt) => sum + dt);
-
-            for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
-                asteroid.update(dt);
-                asteroid.mesh.position.copy(asteroid.pos);
-            }
-
-            for (const [bulletId, bullet] of Object.entries(this.bullets)) {
-                bullet.update(dt);
-                bullet.mesh.position.copy(bullet.pos);
-            }
-
-            for (const [playerId, ship] of Object.entries(this.ships)) {
-                ship.update(dt);
-
-                let currentQuaternion = ship.quaternion.clone();
-                currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
-                this.ships[playerId].mesh.setRotationFromQuaternion(currentQuaternion);
-
-                ship.mesh.position.copy(ship.pos);
-            }
-
-            this.myShip.update(dt);
-
-            this.render3D();
-            this.renderHUD(fps);
         }
+
+        const dt = (ts - this.lastTime) / 1000;
+        this.lastTime = ts;
+        this.lastDts.shift();
+        this.lastDts.push(dt);
+        let fps = this.lastDts.length / this.lastDts.reduce((sum, dt) => sum + dt);
+
+        for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
+            asteroid.update(dt);
+            asteroid.mesh.position.copy(asteroid.pos);
+        }
+
+        for (const [bulletId, bullet] of Object.entries(this.bullets)) {
+            bullet.update(dt);
+            bullet.mesh.position.copy(bullet.pos);
+        }
+
+        for (const [playerId, ship] of Object.entries(this.ships)) {
+            ship.update(dt);
+
+            let currentQuaternion = ship.quaternion.clone();
+            currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
+            this.ships[playerId].mesh.setRotationFromQuaternion(currentQuaternion);
+
+            ship.mesh.position.copy(ship.pos);
+        }
+
+        this.myShip.update(dt);
+
+        this.render3D();
+        this.renderHUD(fps);
     }
 }
 
