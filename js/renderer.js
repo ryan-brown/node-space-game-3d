@@ -392,7 +392,6 @@ class Renderer {
       ship.mesh.position.copy(ship.position);
     }
 
-
     let i = this.explosions.length;
     while (i--) {
       this.explosions[i].update(dt);
@@ -401,7 +400,6 @@ class Renderer {
         this.explosions.splice(i, 1);
       }
     }
-
 
     this.myShip.update(dt);
 

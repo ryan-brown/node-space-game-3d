@@ -36,9 +36,9 @@ class Engine {
     const energyRegen = parseInt(data["energyRegen"]) || 0;
     const fireRate = parseInt(data["fireRate"]) || 0;
 
-    if (RegExp(/^[a-z0-9]+$/i).test(username) && 
-      maxVelocity + acceleration + maxRotateVelocity + 
-      rotateAcceleration + maxHealth + passiveHealthRegen + 
+    if (RegExp(/^[a-z0-9]+$/i).test(username) &&
+      maxVelocity + acceleration + maxRotateVelocity +
+      rotateAcceleration + maxHealth + passiveHealthRegen +
       activeHealthRegen + maxEnergy + energyRegen + fireRate <= 20) {
       return {
         username,
@@ -75,8 +75,8 @@ class Engine {
     const fireRate = shipStats["fireRate"][data["fireRate"]];
 
     this.ships[playerId] = Ship.randomShip(
-      username, hue, maxVelocity, acceleration, maxRotateVelocity, rotateAcceleration, 
-      maxHealth, passiveHealthRegen, activeHealthRegen, 
+      username, hue, maxVelocity, acceleration, maxRotateVelocity, rotateAcceleration,
+      maxHealth, passiveHealthRegen, activeHealthRegen,
       maxEnergy, energyRegen, fireRate);
   }
 
@@ -117,10 +117,11 @@ class Engine {
   }
 
   update(dt) {
+    const mapRadius = this.config["mapRadius"];
+
     for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
       asteroid.update(dt);
 
-      const mapRadius = this.config["mapRadius"];
       if (asteroid.position.length() + asteroid.radius > mapRadius) {
         asteroid.position.normalize().multiplyScalar(mapRadius-asteroid.radius);
         asteroid.velocity.multiplyScalar(-1);
@@ -135,6 +136,10 @@ class Engine {
         this.currentBulletId++;
       }
       ship.update(dt);
+
+      if (ship.position.length() > mapRadius) {
+        ship.takeDamage(20*dt);
+      }
     }
 
     for (const [bulletId, bullet] of Object.entries(this.bullets)) {
@@ -148,10 +153,8 @@ class Engine {
       let shipHit = false;
       for (const [shipId, ship] of Object.entries(this.ships)) {
         if ((bullet.position.clone().sub(ship.position.clone())).length() <= 10 && shipId != bullet.playerId) {
-          ship.health -= 50;
-          if (ship.health <= 0) {
+          if (ship.takeDamage(50)) {
             this.ships[bullet.playerId].score += 1;
-            this.ships[shipId].reset();
           }
           this.removedBullets.push(bulletId);
           delete this.bullets[bulletId];

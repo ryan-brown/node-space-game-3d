@@ -18,5 +18,16 @@ module.exports = {
     maxEnergy: [100, 120, 140, 165, 180, 200],
     energyRegen: [10, 12, 14, 16, 18, 20],
     fireRate: [2, 2.4, 2.8, 3.2, 3.6, 4]
+  },
+  keyMap: {
+    accelerate: 32, // spacebar
+    pitchUp: 87, // w
+    pitchDown: 83, // s
+    yawLeft: 68, // d
+    yawRight: 65, // a
+    rollLeft: 81, // q
+    rollRight: 69, // e
+    fire: 80, // p
+    heal: 72 // h
   }
 }

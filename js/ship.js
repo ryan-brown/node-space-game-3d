@@ -1,6 +1,7 @@
 const THREE = require('three');
 const Util = require('./util.js');
 const Bullet = require('./bullet.js');
+const config = require('./config.js')
 
 class Ship {
   constructor(
@@ -41,11 +42,15 @@ class Ship {
     maxEnergy, energyRegen, fireRate) {
 
     return new Ship(
-      username, hue, 0, 
+      username, hue, 0,
       Util.randomVector3(750), new THREE.Vector3(), maxVelocity, acceleration,
       new THREE.Vector3(), maxRotateVelocity, rotateAcceleration, new THREE.Quaternion(),
       maxHealth, maxHealth, passiveHealthRegen, activeHealthRegen,
       maxEnergy, maxEnergy, energyRegen, fireRate, 0, []);
+  }
+
+  isKeyPressed(key) {
+    return this.keysPressed.includes(config["keyMap"][key]);
   }
 
   reset() {
@@ -68,7 +73,7 @@ class Ship {
   }
 
   canFire() {
-    return this.fireCooldown <= 0 && (this.keysPressed.includes(80) || this.overrideFire)
+    return this.fireCooldown <= 0 && (this.isKeyPressed("fire") || this.overrideFire)
   }
 
   fire(playerId) {
@@ -79,16 +84,24 @@ class Ship {
     return new Bullet(playerId, this.position.clone(), bulletVelocity);
   }
 
-  // 80:p 87:w 83:s 65:a 68:d 81:q 69:e 32:space
+  takeDamage(damage) {
+    this.health -= damage;
+    if (this.health < 0) {
+      this.reset();
+      return true;
+    }
+    return false;
+  }
+
   update(dt) {
-    if (this.keysPressed.includes(87) && !this.keysPressed.includes(83)) this.rotateVelocity.x += this.rotateAcceleration * dt;
-    else if (this.keysPressed.includes(83) && !this.keysPressed.includes(87)) this.rotateVelocity.x -= this.rotateAcceleration * dt;
+    if (this.isKeyPressed("pitchUp") && !this.isKeyPressed("pitchDown")) this.rotateVelocity.x += this.rotateAcceleration * dt;
+    else if (this.isKeyPressed("pitchDown") && !this.isKeyPressed("pitchUp")) this.rotateVelocity.x -= this.rotateAcceleration * dt;
 
-    if (this.keysPressed.includes(65) && !this.keysPressed.includes(68)) this.rotateVelocity.y += this.rotateAcceleration * dt;
-    else if (this.keysPressed.includes(68) && !this.keysPressed.includes(65)) this.rotateVelocity.y -= this.rotateAcceleration * dt;
+    if (this.isKeyPressed("yawRight") && !this.isKeyPressed("yawLeft")) this.rotateVelocity.y += this.rotateAcceleration * dt;
+    else if (this.isKeyPressed("yawLeft") && !this.isKeyPressed("yawRight")) this.rotateVelocity.y -= this.rotateAcceleration * dt;
 
-    if (this.keysPressed.includes(81) && !this.keysPressed.includes(69)) this.rotateVelocity.z += this.rotateAcceleration * dt;
-    else if (this.keysPressed.includes(69) && !this.keysPressed.includes(81)) this.rotateVelocity.z -= this.rotateAcceleration * dt;
+    if (this.isKeyPressed("rollLeft") && !this.isKeyPressed("rollRight")) this.rotateVelocity.z += this.rotateAcceleration * dt;
+    else if (this.isKeyPressed("rollRight") && !this.isKeyPressed("rollLeft")) this.rotateVelocity.z -= this.rotateAcceleration * dt;
 
     if (this.rotateVelocity.x > this.maxRotateVelocity) this.rotateVelocity.x = this.maxRotateVelocity;
     else if (this.rotateVelocity.x < -this.maxRotateVelocity) this.rotateVelocity.x = -this.maxRotateVelocity;
@@ -106,7 +119,7 @@ class Ship {
     this.rotateShip(0, 0, dtRotateVelocity.z, dtRotateVelocity.z);
 
     const consumedBoostEnerty = 25*dt;
-    if (this.keysPressed.includes(32) && this.energy - consumedBoostEnerty >= 0) {
+    if (this.isKeyPressed("accelerate") && this.energy - consumedBoostEnerty >= 0) {
       this.velocity.add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(this.quaternion)).multiplyScalar(this.acceleration * dt));
       this.energy -= consumedBoostEnerty;
     }
@@ -117,7 +130,7 @@ class Ship {
     this.health += this.passiveHealthRegen * dt;
 
     const consumedHealEnergy = 25*dt;
-    if (this.keysPressed.includes(72) && this.energy - consumedHealEnergy >= 0 && this.health < this.maxHealth) {
+    if (this.isKeyPressed("heal") && this.energy - consumedHealEnergy >= 0 && this.health < this.maxHealth) {
       this.health += this.activeHealthRegen * dt;
       this.energy -= consumedHealEnergy;
     }

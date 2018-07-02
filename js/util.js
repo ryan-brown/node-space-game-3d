@@ -8,7 +8,7 @@ class Util {
   static randomVector3(maxLength = 1, minLength = 0) {
     while (true) {
       const randVec = new THREE.Vector3(Util.random(1,-1), Util.random(1,-1), Util.random(1,-1));
-      
+
       if (randVec.length() <= 1) {
         const length = Util.random(maxLength, minLength);
         return (randVec.normalize()).multiplyScalar(length);
