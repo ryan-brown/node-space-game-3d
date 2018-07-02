@@ -1,41 +1,36 @@
 const THREE = require('three');
 
 class Bullet {
-    constructor(pos, vel, playerId = "") {
-        this.playerId = playerId;
-        this.pos = pos;
-        this.vel = vel;
-        this.lifetime = 3;
-    }
+  constructor(playerId, position, velocity) {
+    this.playerId = playerId;
+    this.position = position;
+    this.velocity = velocity;
+    this.lifetime = 3;
+  }
 
-    static fromShip(playerId, ship) {
-        const pos = ship.pos.clone();
-        const shipVel = ship.vel.clone();
-        const quat = ship.quaternion.clone();
-        const vel = shipVel.add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(quat)).multiplyScalar(400));
+  update(dt) {
+    this.lifetime -= dt;
+    this.position.add(this.velocity.clone().multiplyScalar(dt));
+  }
 
-        return new Bullet(pos, vel, playerId);
-    }
+  serialize() {
+    let bulletData = `${this.playerId},`
+    bulletData += `${this.position.x.toFixed(3)},${this.position.y.toFixed(3)},${this.position.z.toFixed(3)},`;
+    bulletData += `${this.velocity.x.toFixed(3)},${this.velocity.y.toFixed(3)},${this.velocity.z.toFixed(3)}`;
 
-    update(dt) {
-        this.lifetime -= dt;
-        this.pos.add(this.vel.clone().multiplyScalar(dt));
-    }
+    return bulletData;
+  }
 
-    serialize() {
-        let bulletData = "";
-        bulletData += `${this.pos.x.toFixed(3)},${this.pos.y.toFixed(3)},${this.pos.z.toFixed(3)},`;
-        bulletData += `${this.vel.x.toFixed(3)},${this.vel.y.toFixed(3)},${this.vel.z.toFixed(3)}`;
-        return bulletData;
-    }
+  static deserialize(data) {
+    const bulletData = data.split(",");
+    const playerId = bulletData[0];
+    const bulletFloats = bulletData.slice(1).map(v => parseFloat(v));
 
-    static deserialize(data) {
-        let bulletData = data.split(",").map(v => parseFloat(v));
-        let pos = new THREE.Vector3(bulletData[0], bulletData[1], bulletData[2]);
-        let vel = new THREE.Vector3(bulletData[3], bulletData[4], bulletData[5]);
+    const position = new THREE.Vector3(bulletFloats[0], bulletFloats[1], bulletFloats[2]);
+    const velocity = new THREE.Vector3(bulletFloats[3], bulletFloats[4], bulletFloats[5]);
 
-        return new Bullet(pos, vel)
-    }
+    return new Bullet(playerId, position, velocity)
+  }
 }
 
 module.exports = Bullet;

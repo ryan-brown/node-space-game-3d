@@ -1,33 +1,162 @@
 <html>
-	<head>
-		<title>Space Game 3D</title>
-		<style>
-			body { margin: 0; }
-			canvas { width: 100%; height: 100% }
-		</style>
-		<script src="/socket.io/socket.io.js"></script>
-	</head>
-	<body>
-		<script>
-			// Stop logging image resize warnings...
-			const originalWarn = console.warn.bind( console )
-			console.warn = (text) => !text.includes('THREE') && originalWarn(text);
-		</script>
-		<div id="loginDiv">
-			<table>
-			  <tr>
-			    <td>Username</td>
-			    <td><input type="text" id="usernameField" /></td> 
-			  </tr>
-			  <tr>
-			    <td>Hue (0-360)</td>
-			    <td><input type="text" id="hueField" /></td>
-			  </tr>
-			  <tr colspan=2>
-			  <td><button id="startButton">Play</button></td>
-			  </tr>
-			</table>
-		</div>
-		<script src="dist/bundle.js"></script>
-	</body>
+  <head>
+    <title>Space Game 3D</title>
+    <style>
+      body { margin: 0; }
+      canvas { width: 100%; height: 100% }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body style="background-image: url('/images/space-texture.jpg')">
+    <script>
+      // Stop logging image resize warnings...
+      const originalWarn = console.warn.bind( console )
+      console.warn = (text) => !text.includes('THREE') && originalWarn(text);
+
+      function changeColor() {
+        document.getElementById("showColor").style.backgroundColor = "hsl("+document.getElementById("hueField").value+",100%,50%)";
+      }
+
+      const totalPoints = 20;
+
+      function updatePoints() {
+        const pointsSpent = 
+          parseInt(document.getElementById("maxVelocityField").value) +
+          parseInt(document.getElementById("accelerationField").value) +
+          parseInt(document.getElementById("maxRotateVelocityField").value) +
+          parseInt(document.getElementById("rotateAccelerationField").value) +
+          parseInt(document.getElementById("maxHealthField").value) +
+          parseInt(document.getElementById("passiveHealthRegenField").value) +
+          parseInt(document.getElementById("activeHealthRegenField").value) +
+          parseInt(document.getElementById("maxEnergyField").value) +
+          parseInt(document.getElementById("energyRegenField").value) +
+          parseInt(document.getElementById("fireRateField").value);
+
+
+        document.getElementById("showRemainingPoints").innerHTML = ""+(totalPoints - pointsSpent);
+      }
+
+
+      function changeMaxVelocity() {
+        document.getElementById("showMaxVelocity").innerHTML = document.getElementById("maxVelocityField").value;
+      }
+
+      function changeAcceleration() {
+        document.getElementById("showAcceleration").innerHTML = document.getElementById("accelerationField").value;
+      }
+
+      function changeMaxRotateVelocity() {
+        document.getElementById("showMaxRotateVelocity").innerHTML = document.getElementById("maxRotateVelocityField").value;
+      }
+
+      function changeRotateAcceleration() {
+        document.getElementById("showRotateAcceleration").innerHTML = document.getElementById("rotateAccelerationField").value;
+      }
+
+      function changeMaxHealth() {
+        document.getElementById("showMaxHealth").innerHTML = document.getElementById("maxHealthField").value;
+      }
+
+      function changePassiveHealthRegen() {
+        document.getElementById("showPassiveHealthRegen").innerHTML = document.getElementById("passiveHealthRegenField").value;
+      }
+
+      function changeActiveHealthRegen() {
+        document.getElementById("showActiveHealthRegen").innerHTML = document.getElementById("activeHealthRegenField").value;
+      }
+
+      function changeMaxEnergy() {
+        document.getElementById("showMaxEnergy").innerHTML = document.getElementById("maxEnergyField").value;
+      }
+
+      function changeEnergyRegen() {
+        document.getElementById("showEnergyRegen").innerHTML = document.getElementById("energyRegenField").value;
+      }
+
+      function changeFireRate() {
+        document.getElementById("showFireRate").innerHTML = document.getElementById("fireRateField").value;
+      }
+    </script>
+    <div id="loginDiv" align="center">
+      <table border="1" bgColor="#ffffff">
+        <tr>
+          <td colspan="3" align="center"><h1>Space Game</h1></td>
+        </tr>
+        <tr>
+          <td>Username</td>
+          <td colspan="2"><input type="text" id="usernameField" placeholder="Enter Username Here..."/></td> 
+        </tr>
+        <tr>
+          <td>Hue</td>
+          <td><input type="range" id="hueField" value="0" min="0" max="360" oninput="changeColor()"/></td>
+          <td id="showColor" bgColor="#ff0000"></td>
+        </tr>
+        <tr>
+          <td>Customize Ship</td>
+          <td>Points Remaining</td>
+          <td><label id="showRemainingPoints">20</label></td>
+        </tr>
+        <tr>
+          <td>Max Velocity</td>
+          <td><input type="range" id="maxVelocityField" value="0" min="0" max="5" oninput="updatePoints();changeMaxVelocity()"/></td> 
+          <td><label id="showMaxVelocity">1</label></td> 
+        </tr>
+        <tr>
+          <td>Acceleration</td>
+          <td><input type="range" id="accelerationField" value="0" min="0" max="5" oninput="updatePoints();changeAcceleration()"/></td> 
+          <td><label id="showAcceleration">1</label></td> 
+        </tr>
+        <tr>
+          <td>Max Rotate Velocity</td>
+          <td><input type="range" id="maxRotateVelocityField" value="0" min="0" max="5" oninput="updatePoints();changeMaxRotateVelocity()"/></td> 
+          <td><label id="showMaxRotateVelocity">1</label></td> 
+        </tr>
+        <tr>
+          <td>Rotate Acceleration</td>
+          <td><input type="range" id="rotateAccelerationField" value="0" min="0" max="5" oninput="updatePoints();changeRotateAcceleration()"/></td> 
+          <td><label id="showRotateAcceleration">1</label></td> 
+        </tr>
+        <tr>
+          <td>Max Health</td>
+          <td><input type="range" id="maxHealthField" value="0" min="0" max="5" oninput="updatePoints();changeMaxHealth()"/></td> 
+          <td><label id="showMaxHealth">1</label></td> 
+        </tr>
+        <tr>
+          <td>Passive Health Regen</td>
+          <td><input type="range" id="passiveHealthRegenField" value="0" min="0" max="5" oninput="updatePoints();changePassiveHealthRegen()"/></td> 
+          <td><label id="showPassiveHealthRegen">1</label></td> 
+        </tr>
+        <tr>
+          <td>Active Health Regen</td>
+          <td><input type="range" id="activeHealthRegenField" value="0" min="0" max="5" oninput="updatePoints();changeActiveHealthRegen()"/></td> 
+          <td><label id="showActiveHealthRegen">1</label></td> 
+        </tr>
+        <tr>
+          <td>Max Energy</td>
+          <td><input type="range" id="maxEnergyField" value="0" min="0" max="5" oninput="updatePoints();changeMaxEnergy()"/></td> 
+          <td><label id="showMaxEnergy">1</label></td> 
+        </tr>
+        <tr>
+          <td>Energy Regen</td>
+          <td><input type="range" id="energyRegenField" value="0" min="0" max="5" oninput="updatePoints();changeEnergyRegen()"/></td> 
+          <td><label id="showEnergyRegen">1</label></td> 
+        </tr>
+        <tr>
+          <td>Fire Rate</td>
+          <td><input type="range" id="fireRateField" value="0" min="0" max="5" oninput="updatePoints();changeFireRate()"/></td> 
+          <td><label id="showFireRate">1</label></td> 
+        </tr>
+        <tr>
+          <td align="center" colspan="3"><button id="startButton">Play</button></td>
+        </tr>
+      </table>
+    </div>
+    <script src="dist/bundle.js"></script>
+  </body>
 </html>
+
+
+
+
+
+

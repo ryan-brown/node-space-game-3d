@@ -1,53 +1,41 @@
 const THREE = require('three');
+const Util = require('./util.js');
 
 class Asteroid {
-    constructor(pos, r, vel) {
-        this.pos = pos;
-        this.r = r;
-        this.vel = vel;
-    }
+  constructor(radius, position, velocity) {
+    this.radius = radius;
+    this.position = position;
+    this.velocity = velocity;
+  }
 
-    update(dt) {
-        this.pos.add(this.vel.clone().multiplyScalar(dt));
-    }
+  update(dt) {
+    this.position.add(this.velocity.clone().multiplyScalar(dt));
+  }
 
-    static generateRandom(maxDist, rMin, rMax, velMin, velMax, pos = new THREE.Vector3()) {
-        let validPoint = false;
-        let randPos;
-        while (!validPoint) {
-            const randX = 2*maxDist*Math.random() - maxDist;
-            const randY = 2*maxDist*Math.random() - maxDist;
-            const randZ = 2*maxDist*Math.random() - maxDist;
+  static generateRandom(maxDistance, radiusMin, radiusMax, velocityMin, velocityMax, position = new THREE.Vector3()) {
+    const radius = Util.random(radiusMax, radiusMin);
+    position.add(Util.randomVector3(maxDistance));
+    const velocity = Util.randomVector3(velocityMax, velocityMin);
 
-            if (randX*randX + randY*randY + randZ*randZ <= (maxDist-rMax)*(maxDist-rMax)) {
-                validPoint = true;
-                randPos = new THREE.Vector3(randX, randY, randZ);
-            }
-        }
+    return new Asteroid(radius, position, velocity);
+  }
 
-        pos.add(randPos);
-        
-        const radius = (rMax - rMin) * Math.random() + rMin;
+  serialize() {
+    let asteroidData = `${this.radius.toFixed(3)},`
+    asteroidData += `${this.position.x.toFixed(3)},${this.position.y.toFixed(3)},${this.position.z.toFixed(3)},`;
+    asteroidData += `${this.velocity.x.toFixed(3)},${this.velocity.y.toFixed(3)},${this.velocity.z.toFixed(3)}`;
+    return asteroidData;
+  }
 
-        const randVelX = (velMax - velMin) * Math.random() - velMin;
-        const randVelY = (velMax - velMin) * Math.random() - velMin;
-        const randVelZ = (velMax - velMin) * Math.random() - velMin;
-        const vel = new THREE.Vector3(randVelX, randVelY, randVelZ)
+  static deserialize(data) {
+    let asteroidData = data.split(",").map(v => parseFloat(v));
+    
+    let radius = asteroidData[0];
+    let position = new THREE.Vector3(asteroidData[1], asteroidData[2], asteroidData[3]);
+    let velocity = new THREE.Vector3(asteroidData[4], asteroidData[5], asteroidData[6]);
 
-        return new Asteroid(pos, radius, vel);
-    }
-
-    serialize() {
-        return [this.pos.x, this.pos.y, this.pos.z, this.r, this.vel.x, this.vel.y, this.vel.z];
-    }
-
-    static deserialize(data) {
-        let pos = new THREE.Vector3(data[0], data[1], data[2]);
-        let r = data[3];
-        let vel = new THREE.Vector3(data[4], data[5], data[6]);
-
-        return new Asteroid(pos, r, vel)
-    }
+    return new Asteroid(radius, position, velocity);
+  }
 }
 
 module.exports = Asteroid;

@@ -1,95 +1,185 @@
 const THREE = require('three');
+const Util = require('./util.js');
+const Bullet = require('./bullet.js');
 
 class Ship {
-    constructor(username = "", hue = 0, pos = new THREE.Vector3(), vel = new THREE.Vector3(), rotateVel = new THREE.Vector3(), quaternion = new THREE.Quaternion(), score = 0, keysPressed = []) {
-        this.username = username;
-        this.hue = hue;
-        this.pos = pos;
-        this.vel = vel;
-        this.rotateVel = rotateVel;
-        this.quaternion = quaternion;
-        this.keysPressed = keysPressed;
+  constructor(
+    username, hue, score,
+    position, velocity, maxVelocity, acceleration,
+    rotateVelocity, maxRotateVelocity, rotateAcceleration, quaternion,
+    health, maxHealth, passiveHealthRegen, activeHealthRegen,
+    energy, maxEnergy, energyRegen,
+    fireRate, fireCooldown, keysPressed) {
 
-        this.accel = 100;
-        this.maxVel = 80;
+    this.username = username;
+    this.hue = hue;
+    this.score = score;
+    this.position = position;
+    this.velocity = velocity;
+    this.maxVelocity = maxVelocity;
+    this.acceleration = acceleration;
+    this.rotateVelocity = rotateVelocity;
+    this.maxRotateVelocity = maxRotateVelocity;
+    this.rotateAcceleration = rotateAcceleration;
+    this.quaternion = quaternion;
+    this.health = health;
+    this.maxHealth = maxHealth;
+    this.passiveHealthRegen = passiveHealthRegen;
+    this.activeHealthRegen = activeHealthRegen;
+    this.energy = energy;
+    this.maxEnergy = maxEnergy;
+    this.energyRegen = energyRegen;
+    this.fireRate = fireRate;
+    this.fireCooldown = fireCooldown;
+    this.keysPressed = keysPressed;
+    this.overrideFire = false;
+  }
 
-        this.rotateAccel = Math.PI / 1.5;
-        this.maxRotateVel = Math.PI / 2;
+  static randomShip(
+    username, hue, maxVelocity, acceleration, maxRotateVelocity, rotateAcceleration,
+    maxHealth, passiveHealthRegen, activeHealthRegen,
+    maxEnergy, energyRegen, fireRate) {
 
-        this.score = score;
+    return new Ship(
+      username, hue, 0, 
+      Util.randomVector3(750), new THREE.Vector3(), maxVelocity, acceleration,
+      new THREE.Vector3(), maxRotateVelocity, rotateAcceleration, new THREE.Quaternion(),
+      maxHealth, maxHealth, passiveHealthRegen, activeHealthRegen,
+      maxEnergy, maxEnergy, energyRegen, fireRate, 0, []);
+  }
+
+  reset() {
+    this.position = Util.randomVector3(750);
+    this.velocity = new THREE.Vector3();
+    this.rotateVelocity = new THREE.Vector3();
+    this.quaternion = new THREE.Quaternion();
+    this.health = this.maxHealth;
+    this.energy = this.maxEnergy;
+    this.fireCooldown = 0;
+    this.keysPressed = [];
+    this.overrideFire = false;
+  }
+
+  rotateShip(x, y, z, w) {
+    const currentQuaternion = this.quaternion;
+    const multiplyQuaternion = (new THREE.Quaternion(Math.sin(x / 2), Math.sin(y / 2), Math.sin(z / 2), Math.cos(w / 2))).normalize();
+    currentQuaternion.multiplyQuaternions(currentQuaternion, multiplyQuaternion);
+    this.quaternion = currentQuaternion;
+  }
+
+  canFire() {
+    return this.fireCooldown <= 0 && (this.keysPressed.includes(80) || this.overrideFire)
+  }
+
+  fire(playerId) {
+    this.fireCooldown = 1/this.fireRate;
+
+    const bulletVelocity = this.velocity.clone().add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(this.quaternion)).multiplyScalar(400));
+    this.overrideFire = false;
+    return new Bullet(playerId, this.position.clone(), bulletVelocity);
+  }
+
+  // 80:p 87:w 83:s 65:a 68:d 81:q 69:e 32:space
+  update(dt) {
+    if (this.keysPressed.includes(87) && !this.keysPressed.includes(83)) this.rotateVelocity.x += this.rotateAcceleration * dt;
+    else if (this.keysPressed.includes(83) && !this.keysPressed.includes(87)) this.rotateVelocity.x -= this.rotateAcceleration * dt;
+
+    if (this.keysPressed.includes(65) && !this.keysPressed.includes(68)) this.rotateVelocity.y += this.rotateAcceleration * dt;
+    else if (this.keysPressed.includes(68) && !this.keysPressed.includes(65)) this.rotateVelocity.y -= this.rotateAcceleration * dt;
+
+    if (this.keysPressed.includes(81) && !this.keysPressed.includes(69)) this.rotateVelocity.z += this.rotateAcceleration * dt;
+    else if (this.keysPressed.includes(69) && !this.keysPressed.includes(81)) this.rotateVelocity.z -= this.rotateAcceleration * dt;
+
+    if (this.rotateVelocity.x > this.maxRotateVelocity) this.rotateVelocity.x = this.maxRotateVelocity;
+    else if (this.rotateVelocity.x < -this.maxRotateVelocity) this.rotateVelocity.x = -this.maxRotateVelocity;
+
+    if (this.rotateVelocity.y > this.maxRotateVelocity) this.rotateVelocity.y = this.maxRotateVelocity;
+    else if (this.rotateVelocity.y < -this.maxRotateVelocity) this.rotateVelocity.y = -this.maxRotateVelocity;
+
+    if (this.rotateVelocity.z > this.maxRotateVelocity) this.rotateVelocity.z = this.maxRotateVelocity;
+    else if (this.rotateVelocity.z < -this.maxRotateVelocity) this.rotateVelocity.z = -this.maxRotateVelocity;
+
+    const dtRotateVelocity = this.rotateVelocity.clone().multiplyScalar(dt);
+
+    this.rotateShip(dtRotateVelocity.x, 0, 0, dtRotateVelocity.x);
+    this.rotateShip(0, dtRotateVelocity.y, 0, dtRotateVelocity.y);
+    this.rotateShip(0, 0, dtRotateVelocity.z, dtRotateVelocity.z);
+
+    const consumedBoostEnerty = 25*dt;
+    if (this.keysPressed.includes(32) && this.energy - consumedBoostEnerty >= 0) {
+      this.velocity.add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(this.quaternion)).multiplyScalar(this.acceleration * dt));
+      this.energy -= consumedBoostEnerty;
+    }
+    if (this.velocity.length() > this.maxVelocity) this.velocity.normalize().multiplyScalar(this.maxVelocity);
+
+    this.position.add(this.velocity.clone().multiplyScalar(dt));
+    this.energy += this.energyRegen * dt;
+    this.health += this.passiveHealthRegen * dt;
+
+    const consumedHealEnergy = 25*dt;
+    if (this.keysPressed.includes(72) && this.energy - consumedHealEnergy >= 0 && this.health < this.maxHealth) {
+      this.health += this.activeHealthRegen * dt;
+      this.energy -= consumedHealEnergy;
     }
 
-    static randomShip(data) {
-        const randX = 1000 * Math.random() - 500;
-        const randY = 1000 * Math.random() - 500;
-        const randZ = 1000 * Math.random() - 500;
+    if (this.fireCooldown > 0) this.fireCooldown -= dt;
 
-        return new Ship(data["username"], data["hue"], new THREE.Vector3(randX, randY, randZ));
-    }
+    if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
+    if (this.health > this.maxHealth) this.health = this.maxHealth;
+  }
 
-    rotateShip(x, y, z, w) {
-        const currentQuaternion = this.quaternion;
-        const multiplyQuaternion = (new THREE.Quaternion(Math.sin(x / 2), Math.sin(y / 2), Math.sin(z / 2), Math.cos(w / 2))).normalize();
-        currentQuaternion.multiplyQuaternions(currentQuaternion, multiplyQuaternion);
-        this.quaternion = currentQuaternion;
-    }
+  serialize() {
+    const shipIntData = [this.hue, this.score];
+    const shipFloatData = [
+      this.position.x, this.position.y, this.position.z,
+      this.velocity.x, this.velocity.y, this.velocity.z, this.maxVelocity, this.acceleration,
+      this.rotateVelocity.x, this.rotateVelocity.y, this.rotateVelocity.z, this.maxRotateVelocity, this.rotateAcceleration,
+      this.quaternion.x, this.quaternion.y, this.quaternion.z, this.quaternion.w,
+      this.health, this.maxHealth, this.passiveHealthRegen, this.activeHealthRegen,
+      this.energy, this.maxEnergy, this.energyRegen, this.fireRate, this.fireCooldown];
 
-    // 87:w 83:s 65:a 68:d 81:q 69:e 32:space
-    update(dt) {
-        if (this.keysPressed.includes(87) && !this.keysPressed.includes(83)) this.rotateVel.x += this.rotateAccel * dt;
-        else if (this.keysPressed.includes(83) && !this.keysPressed.includes(87)) this.rotateVel.x -= this.rotateAccel * dt;
+    let returnData = `${this.username},${Util.serializeInts(shipIntData)},${Util.serializeFloats(3, shipFloatData)}`
+    if (this.keysPressed.length > 0) returnData += `,${Util.serializeInts(this.keysPressed)}`
 
-        if (this.keysPressed.includes(65) && !this.keysPressed.includes(68)) this.rotateVel.y += this.rotateAccel * dt;
-        else if (this.keysPressed.includes(68) && !this.keysPressed.includes(65)) this.rotateVel.y -= this.rotateAccel * dt;
+    return returnData
+  }
 
-        if (this.keysPressed.includes(81) && !this.keysPressed.includes(69)) this.rotateVel.z += this.rotateAccel * dt;
-        else if (this.keysPressed.includes(69) && !this.keysPressed.includes(81)) this.rotateVel.z -= this.rotateAccel * dt;
+  static deserialize(data) {
+    const shipData = data.split(",");
 
-        if (this.rotateVel.x > this.maxRotateVel) this.rotateVel.x = this.maxRotateVel;
-        else if (this.rotateVel.x < -this.maxRotateVel) this.rotateVel.x = -this.maxRotateVel;
+    const username = shipData[0];
 
-        if (this.rotateVel.y > this.maxRotateVel) this.rotateVel.y = this.maxRotateVel;
-        else if (this.rotateVel.y < -this.maxRotateVel) this.rotateVel.y = -this.maxRotateVel;
+    const [hue, score] = shipData.slice(1,3).map(v => parseInt(v));
 
-        if (this.rotateVel.z > this.maxRotateVel) this.rotateVel.z = this.maxRotateVel;
-        else if (this.rotateVel.z < -this.maxRotateVel) this.rotateVel.z = -this.maxRotateVel;
+    const shipFloats = shipData.slice(3,29).map(v => parseFloat(v));
+    const position = new THREE.Vector3(shipFloats[0], shipFloats[1], shipFloats[2]);
+    const velocity = new THREE.Vector3(shipFloats[3], shipFloats[4], shipFloats[5]);
+    const maxVelocity = shipFloats[6];
+    const acceleration = shipFloats[7];
+    const rotateVelocity = new THREE.Vector3(shipFloats[8], shipFloats[9], shipFloats[10]);
+    const maxRotateVelocity = shipFloats[11];
+    const rotateAcceleration = shipFloats[12];
+    const quaternion = new THREE.Quaternion(shipFloats[13], shipFloats[14], shipFloats[15], shipFloats[16]);
+    const health = shipFloats[17];
+    const maxHealth = shipFloats[18];
+    const passiveHealthRegen = shipFloats[19];
+    const activeHealthRegen = shipFloats[20];
+    const energy = shipFloats[21];
+    const maxEnergy = shipFloats[22];
+    const energyRegen = shipFloats[23];
+    const fireRate = shipFloats[24];
+    const fireCooldown = shipFloats[25];
 
-        const dtRotateVelocity = this.rotateVel.clone().multiplyScalar(dt);
-        this.rotateShip(dtRotateVelocity.x, 0, 0, dtRotateVelocity.x);
-        this.rotateShip(0, dtRotateVelocity.y, 0, dtRotateVelocity.y);
-        this.rotateShip(0, 0, dtRotateVelocity.z, dtRotateVelocity.z);
+    const keysPressed = shipData.slice(29).map(v => parseInt(v));
 
-        if (this.keysPressed.includes(32)) this.vel.add(((new THREE.Vector3(0, 0, -1)).applyQuaternion(this.quaternion)).multiplyScalar(this.accel * dt));
-        if (this.vel.length() > this.maxVel) this.vel.normalize().multiplyScalar(this.maxVel);
-
-        this.pos.add(this.vel.clone().multiplyScalar(dt));
-    }
-
-    serialize() {
-        let shipData = "";
-        shipData += `${this.pos.x.toFixed(3)},${this.pos.y.toFixed(3)},${this.pos.z.toFixed(3)},`;
-        shipData += `${this.vel.x.toFixed(3)},${this.vel.y.toFixed(3)},${this.vel.z.toFixed(3)},`;
-        shipData += `${this.rotateVel.x.toFixed(3)},${this.rotateVel.y.toFixed(3)},${this.rotateVel.z.toFixed(3)},`;
-        shipData += `${this.quaternion.x.toFixed(3)},${this.quaternion.y.toFixed(3)},${this.quaternion.z.toFixed(3)},${this.quaternion.w.toFixed(3)},`;
-        shipData += `${this.score},`;
-        return [this.username, this.hue, shipData, this.keysPressed];
-    }
-
-    static deserialize(data) {
-        let username = data[0];
-        let hue = data[1];
-
-        let shipData = data[2].split(",").map(v => parseFloat(v));
-        let pos = new THREE.Vector3(shipData[0], shipData[1], shipData[2]);
-        let vel = new THREE.Vector3(shipData[3], shipData[4], shipData[5]);
-        let rotateVel = new THREE.Vector3(shipData[6], shipData[7], shipData[8]);
-        let quaternion = new THREE.Quaternion(shipData[9], shipData[10], shipData[11], shipData[12]);
-        let score = shipData[13];
-
-        let keysPressed = data[3];
-
-        return new Ship(username, hue, pos, vel, rotateVel, quaternion, score, keysPressed);
-    }
+    return new Ship(
+      username, hue, score,
+      position, velocity, maxVelocity, acceleration,
+      rotateVelocity, maxRotateVelocity, rotateAcceleration, quaternion,
+      health, maxHealth, passiveHealthRegen, activeHealthRegen,
+      energy, maxEnergy, energyRegen,
+      fireRate, fireCooldown, keysPressed);
+  }
 }
 
 module.exports = Ship;
