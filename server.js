@@ -19,9 +19,10 @@ io.on('connection', function(socket) {
       engine.addShip(socket.id, validatedData);
       socket.emit('init', engine.serialize(socket.id));
     } else {
+      socket.emit('invalid');
       socket.disconnect();
     }
-    
+
     socket.on('keyup', function(data) {
       engine.ships[socket.id].keysPressed = engine.ships[socket.id].keysPressed.filter(x => x != data);
     });

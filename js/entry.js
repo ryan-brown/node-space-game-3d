@@ -4,7 +4,7 @@ document.getElementById("startButton").addEventListener("click", () => {
   const Renderer = require('./renderer.js');
   const config = require('./config.js');
 
-  const socket = io.connect("localhost:8090");
+  const socket = io.connect("10.4.0.51:8090");
   socket.emit("start", {
     username: document.getElementById("usernameField").value,
     hue: document.getElementById("hueField").value,
@@ -18,6 +18,11 @@ document.getElementById("startButton").addEventListener("click", () => {
     maxEnergy: document.getElementById("maxEnergyField").value,
     energyRegen: document.getElementById("energyRegenField").value,
     fireRate: document.getElementById("fireRateField").value,
+  });
+
+  socket.on("invalid", () => {
+    alert("Invalid ship, please try again.");
+    window.location.reload(false);
   });
 
   socket.on("init", (data) => {

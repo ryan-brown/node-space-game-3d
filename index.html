@@ -20,7 +20,7 @@
       const totalPoints = 20;
 
       function updatePoints() {
-        const pointsSpent = 
+        const pointsSpent =
           parseInt(document.getElementById("maxVelocityField").value) +
           parseInt(document.getElementById("accelerationField").value) +
           parseInt(document.getElementById("maxRotateVelocityField").value) +
@@ -33,7 +33,7 @@
           parseInt(document.getElementById("fireRateField").value);
 
 
-        document.getElementById("showRemainingPoints").innerHTML = ""+(totalPoints - pointsSpent);
+        document.getElementById("showRemainingPoints").innerHTML = `${(totalPoints - pointsSpent)}`;
       }
 
 
@@ -84,7 +84,7 @@
         </tr>
         <tr>
           <td>Username</td>
-          <td colspan="2"><input type="text" id="usernameField" placeholder="Enter Username Here..."/></td> 
+          <td colspan="2"><input type="text" id="usernameField" placeholder="Enter Username Here..."/></td>
         </tr>
         <tr>
           <td>Hue</td>
@@ -98,53 +98,53 @@
         </tr>
         <tr>
           <td>Max Velocity</td>
-          <td><input type="range" id="maxVelocityField" value="0" min="0" max="5" oninput="updatePoints();changeMaxVelocity()"/></td> 
-          <td><label id="showMaxVelocity">1</label></td> 
+          <td><input type="range" id="maxVelocityField" value="0" min="0" max="5" oninput="updatePoints();changeMaxVelocity()"/></td>
+          <td><label id="showMaxVelocity">0</label></td>
         </tr>
         <tr>
           <td>Acceleration</td>
-          <td><input type="range" id="accelerationField" value="0" min="0" max="5" oninput="updatePoints();changeAcceleration()"/></td> 
-          <td><label id="showAcceleration">1</label></td> 
+          <td><input type="range" id="accelerationField" value="0" min="0" max="5" oninput="updatePoints();changeAcceleration()"/></td>
+          <td><label id="showAcceleration">0</label></td>
         </tr>
         <tr>
           <td>Max Rotate Velocity</td>
-          <td><input type="range" id="maxRotateVelocityField" value="0" min="0" max="5" oninput="updatePoints();changeMaxRotateVelocity()"/></td> 
-          <td><label id="showMaxRotateVelocity">1</label></td> 
+          <td><input type="range" id="maxRotateVelocityField" value="0" min="0" max="5" oninput="updatePoints();changeMaxRotateVelocity()"/></td>
+          <td><label id="showMaxRotateVelocity">0</label></td>
         </tr>
         <tr>
           <td>Rotate Acceleration</td>
-          <td><input type="range" id="rotateAccelerationField" value="0" min="0" max="5" oninput="updatePoints();changeRotateAcceleration()"/></td> 
-          <td><label id="showRotateAcceleration">1</label></td> 
+          <td><input type="range" id="rotateAccelerationField" value="0" min="0" max="5" oninput="updatePoints();changeRotateAcceleration()"/></td>
+          <td><label id="showRotateAcceleration">0</label></td>
         </tr>
         <tr>
           <td>Max Health</td>
-          <td><input type="range" id="maxHealthField" value="0" min="0" max="5" oninput="updatePoints();changeMaxHealth()"/></td> 
-          <td><label id="showMaxHealth">1</label></td> 
+          <td><input type="range" id="maxHealthField" value="0" min="0" max="5" oninput="updatePoints();changeMaxHealth()"/></td>
+          <td><label id="showMaxHealth">0</label></td>
         </tr>
         <tr>
           <td>Passive Health Regen</td>
-          <td><input type="range" id="passiveHealthRegenField" value="0" min="0" max="5" oninput="updatePoints();changePassiveHealthRegen()"/></td> 
-          <td><label id="showPassiveHealthRegen">1</label></td> 
+          <td><input type="range" id="passiveHealthRegenField" value="0" min="0" max="5" oninput="updatePoints();changePassiveHealthRegen()"/></td>
+          <td><label id="showPassiveHealthRegen">0</label></td>
         </tr>
         <tr>
           <td>Active Health Regen</td>
-          <td><input type="range" id="activeHealthRegenField" value="0" min="0" max="5" oninput="updatePoints();changeActiveHealthRegen()"/></td> 
-          <td><label id="showActiveHealthRegen">1</label></td> 
+          <td><input type="range" id="activeHealthRegenField" value="0" min="0" max="5" oninput="updatePoints();changeActiveHealthRegen()"/></td>
+          <td><label id="showActiveHealthRegen">0</label></td>
         </tr>
         <tr>
           <td>Max Energy</td>
-          <td><input type="range" id="maxEnergyField" value="0" min="0" max="5" oninput="updatePoints();changeMaxEnergy()"/></td> 
-          <td><label id="showMaxEnergy">1</label></td> 
+          <td><input type="range" id="maxEnergyField" value="0" min="0" max="5" oninput="updatePoints();changeMaxEnergy()"/></td>
+          <td><label id="showMaxEnergy">0</label></td>
         </tr>
         <tr>
           <td>Energy Regen</td>
-          <td><input type="range" id="energyRegenField" value="0" min="0" max="5" oninput="updatePoints();changeEnergyRegen()"/></td> 
-          <td><label id="showEnergyRegen">1</label></td> 
+          <td><input type="range" id="energyRegenField" value="0" min="0" max="5" oninput="updatePoints();changeEnergyRegen()"/></td>
+          <td><label id="showEnergyRegen">0</label></td>
         </tr>
         <tr>
           <td>Fire Rate</td>
-          <td><input type="range" id="fireRateField" value="0" min="0" max="5" oninput="updatePoints();changeFireRate()"/></td> 
-          <td><label id="showFireRate">1</label></td> 
+          <td><input type="range" id="fireRateField" value="0" min="0" max="5" oninput="updatePoints();changeFireRate()"/></td>
+          <td><label id="showFireRate">0</label></td>
         </tr>
         <tr>
           <td align="center" colspan="3"><button id="startButton">Play</button></td>

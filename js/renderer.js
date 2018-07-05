@@ -300,14 +300,23 @@ class Renderer {
 
     this.hudContext.fillText("Scoreboard", 10, 10);
 
-    let currentHeight = 42;
-    this.hudContext.fillStyle = `hsl(${this.myShip.hue}, 100%, 50%)`;
-    this.hudContext.fillText(this.myShip.username + "(you): " + Math.round(this.myShip.score), 10, currentHeight);
 
+    let scores = [];
+    scores.push([this.myShip.hue, this.myShip.username+"(you)", Math.round(this.myShip.score)]);
     for (const [shipId, ship] of Object.entries(this.ships)) {
+      scores.push([ship.hue, ship.username, Math.round(ship.score)]);
+    }
+
+    scores.sort((a,b) => {
+      return b[2] - a[2];
+    });
+
+    let currentHeight = 10;
+
+    for (const scoreboardData of scores) {
       currentHeight += 32;
-      this.hudContext.fillStyle = `hsl(${ship.hue}, 100%, 50%)`;
-      this.hudContext.fillText(ship.username + ": " + Math.round(ship.score), 10, currentHeight);
+      this.hudContext.fillStyle = `hsl(${scoreboardData[0]}, 100%, 50%)`;
+      this.hudContext.fillText(`${scoreboardData[1]}: ${scoreboardData[2]}`, 10, currentHeight);
     }
   }
 
