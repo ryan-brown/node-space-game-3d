@@ -16,7 +16,7 @@ class Explosion {
   addParticles(position) {
     for (var p = 0; p < this.particleCount; p++) {
       let particle = position.clone();
-      particle.velocity = Util.randomVector3(25, 5);
+      particle.velocity = Util.randomVector3(40, 10);
       this.particleGeometry.vertices.push(particle);
     }
   }
@@ -25,7 +25,7 @@ class Explosion {
     this.lifetime -= dt;
     for (var p = 0; p < this.particleCount; p++) {
       const particle = this.particleGeometry.vertices[p];
-      particle.add(particle.velocity.clone().multiplyScalar(dt));
+      particle.add(particle.velocity.clone().multiplyScalar(dt*((1+this.lifetime)/4)));
     }
     this.particleGeometry.verticesNeedUpdate = true;
   }

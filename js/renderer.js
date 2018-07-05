@@ -384,6 +384,7 @@ class Renderer {
     for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
       asteroid.update(dt);
       asteroid.mesh.position.copy(asteroid.position);
+      asteroid.mesh.rotateOnAxis(asteroid.rotationAxis, asteroid.rotationSpeed*dt);
     }
 
     for (const [bulletId, bullet] of Object.entries(this.bullets)) {
