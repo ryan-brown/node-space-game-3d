@@ -138,7 +138,7 @@ class Engine {
       ship.update(dt);
 
       if (ship.position.length() > mapRadius) {
-        ship.takeDamage(20*dt);
+        ship.takeDamage(10*dt);
       }
     }
 

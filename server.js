@@ -39,21 +39,27 @@ io.on('connection', function(socket) {
   });
 });
 
-let ENGINE_FPS = 64;
-let lastTime = new Date().getTime();
-setInterval(function() {
-  const now = new Date().getTime();
-  const dt = (now - lastTime) / 1000;
-
-  lastTime = now;
+const NS_PER_SEC = 1e9;
+const EMITS_PER_SECOND = 30;
+let timeTilEmit = 0;
+let lastTime = process.hrtime();
+setInterval(() => {
+  const currTime = process.hrtime();
+  const dt = currTime[0]-lastTime[0] + (currTime[1]-lastTime[1])/NS_PER_SEC;
+  lastTime = currTime;
 
   engine.update(dt);
 
-  io.sockets.emit('update', engine.updateSerialize());
+  timeTilEmit -= dt;
+  if (timeTilEmit <= 0) {
+    timeTilEmit = 1/EMITS_PER_SECOND;
 
-  engine.newBullets = [];
-  engine.removedBullets = [];
-  engine.newAsteroids = [];
-  engine.updateAsteroids = [];
-  engine.removedAsteroids = [];
-}, 1000 / ENGINE_FPS);
+    io.sockets.emit('update', engine.updateSerialize());
+
+    engine.newBullets = [];
+    engine.removedBullets = [];
+    engine.newAsteroids = [];
+    engine.updateAsteroids = [];
+    engine.removedAsteroids = [];
+  }
+});

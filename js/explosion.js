@@ -3,7 +3,6 @@ const Util = require('./util.js');
 
 class Explosion {
   constructor(position) {
-    console.log(position);
     this.lifetime = 2;
     this.particleCount = 100;
 
