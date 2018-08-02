@@ -1,8 +1,11 @@
-const THREE = require('three');
-const Ship = require('./ship.js');
-const Bullet = require('./bullet.js');
-const Asteroid = require('./asteroid.js');
-const Explosion = require('./explosion.js');
+/* eslint-env browser */
+import * as THREE from 'three';
+import Ship from './ship.js';
+import Bullet from './bullet.js';
+import Asteroid from './asteroid.js';
+import Explosion from './explosion.js';
+
+const DEBUG = DEBUG || false;
 
 class Renderer {
   constructor(config) {
@@ -21,13 +24,18 @@ class Renderer {
     const height = window.innerHeight;
 
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(60, width / height, 0.25, 2*this.config["mapRadius"]);
+    this.camera = new THREE.PerspectiveCamera(
+      60,
+      width / height,
+      0.25,
+      2 * this.config['mapRadius'],
+    );
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(width, height);
     this.renderer.autoClear = false;
     document.body.appendChild(this.renderer.domElement);
 
-    this.textures = {}
+    this.textures = {};
     this.loadTextures();
 
     this.renderWireSphere();
@@ -44,12 +52,19 @@ class Renderer {
 
     this.hudContext = this.hudCanvas.getContext('2d');
 
-    this.cameraHUD = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, 0, 30);
+    this.cameraHUD = new THREE.OrthographicCamera(
+      -width / 2,
+      width / 2,
+      height / 2,
+      -height / 2,
+      0,
+      30,
+    );
     this.sceneHUD = new THREE.Scene();
 
     this.hudTexture = new THREE.Texture(this.hudCanvas);
     const material = new THREE.MeshBasicMaterial({
-      map: this.hudTexture
+      map: this.hudTexture,
     });
     material.transparent = true;
 
@@ -57,24 +72,28 @@ class Renderer {
     var plane = new THREE.Mesh(planeGeometry, material);
     this.sceneHUD.add(plane);
 
-    this.lastDts = [0,0,0,0,0,0,0,0,0,0];
+    this.lastDts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   }
 
   renderWireSphere() {
-    const geometry = new THREE.SphereGeometry(this.config["mapRadius"], 32, 32);
+    const geometry = new THREE.SphereGeometry(this.config['mapRadius'], 32, 32);
     const material = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
-      wireframe: true
+      wireframe: true,
     });
     const mesh = new THREE.Mesh(geometry, material);
     this.scene.add(mesh);
   }
 
   renderSkybox() {
-    const geometry = new THREE.SphereGeometry(2*this.config["mapRadius"], 32, 32);
+    const geometry = new THREE.SphereGeometry(
+      2 * this.config['mapRadius'],
+      32,
+      32,
+    );
     const material = new THREE.MeshBasicMaterial({
-      map: this.textures['space']
-    })
+      map: this.textures['space'],
+    });
     this.skybox = new THREE.Mesh(geometry, material);
     this.skybox.material.side = THREE.BackSide;
 
@@ -82,8 +101,8 @@ class Renderer {
   }
 
   loadTextures() {
-      const loader = new THREE.TextureLoader();
-      this.textures['space'] = loader.load('images/space-texture.jpg');
+    const loader = new THREE.TextureLoader();
+    this.textures['space'] = loader.load('images/space-texture.jpg');
   }
 
   initAsteroids(asteroids) {
@@ -115,7 +134,7 @@ class Renderer {
     this.initBullets(data[2]);
     this.initShips(data[3]);
 
-    requestAnimationFrame((ts) => this.renderLoop(ts));
+    requestAnimationFrame(ts => this.renderLoop(ts));
   }
 
   newAsteroid(asteroidId, asteroidData) {
@@ -124,12 +143,15 @@ class Renderer {
     let geometry = new THREE.IcosahedronGeometry(radius);
 
     for (var i = 0; i < geometry.vertices.length; i++) {
-      geometry.vertices[i].x += (radius / 3) * Math.random() - (radius / 6);
-      geometry.vertices[i].y += (radius / 3) * Math.random() - (radius / 6);
-      geometry.vertices[i].z += (radius / 3) * Math.random() - (radius / 6);
+      geometry.vertices[i].x += (radius / 3) * Math.random() - radius / 6;
+      geometry.vertices[i].y += (radius / 3) * Math.random() - radius / 6;
+      geometry.vertices[i].z += (radius / 3) * Math.random() - radius / 6;
     }
 
-    const material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xff00ff,
+      wireframe: true,
+    });
 
     asteroid.mesh = new THREE.Mesh(geometry, material);
     asteroid.mesh.position.copy(asteroid.position);
@@ -141,10 +163,10 @@ class Renderer {
   newBullet(bulletId, bulletData) {
     let bullet = Bullet.deserialize(bulletData);
 
-    const geometry = new THREE.TetrahedronGeometry(0.1)
+    const geometry = new THREE.TetrahedronGeometry(0.1);
     const material = new THREE.MeshBasicMaterial({
       color: 0xffff00,
-      wireframe: true
+      wireframe: true,
     });
 
     bullet.mesh = new THREE.Mesh(geometry, material);
@@ -160,7 +182,7 @@ class Renderer {
     const geometry = new THREE.ConeGeometry(10, 20, 8);
     const material = new THREE.MeshBasicMaterial({
       color: `hsl(${ship.hue}, 100%, 50%)`,
-      wireframe: true
+      wireframe: true,
     });
 
     ship.mesh = new THREE.Mesh(geometry, material);
@@ -189,7 +211,10 @@ class Renderer {
         this.ships[shipId] = newShip;
 
         let currentQuaternion = ship.quaternion.clone();
-        currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
+        currentQuaternion.multiplyQuaternions(
+          currentQuaternion,
+          new THREE.Quaternion(-1, 0, 0, 1).normalize(),
+        );
         this.ships[shipId].mesh.setRotationFromQuaternion(currentQuaternion);
 
         this.ships[shipId].mesh.position.copy(ship.position);
@@ -202,7 +227,7 @@ class Renderer {
     }
 
     for (const [shipId, shipData] of Object.entries(ships)) {
-        this.newShip(shipId, shipData);
+      this.newShip(shipId, shipData);
     }
   }
 
@@ -217,7 +242,7 @@ class Renderer {
 
     for (const bulletId of data[2]) {
       const explosion = new Explosion(this.bullets[bulletId].position);
-      this.explosions.push(explosion)
+      this.explosions.push(explosion);
       this.scene.add(explosion.mesh);
 
       this.scene.remove(this.bullets[bulletId].mesh);
@@ -255,23 +280,25 @@ class Renderer {
   }
 
   renderCrosshair() {
-    const centerX = window.innerWidth/2;
-    const centerY = window.innerHeight/2;
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
 
-    const size = Math.min(centerX, centerY)/50;
+    const size = Math.min(centerX, centerY) / 50;
 
     this.hudContext.strokeStyle = 'white';
     this.hudContext.lineWidth = 3;
 
-    this.crosshairStroke(centerX + size, centerY, centerX + 4*size, centerY);
-    this.crosshairStroke(centerX - size, centerY, centerX - 4*size, centerY);
-    this.crosshairStroke(centerX, centerY + size, centerX, centerY + 4*size);
-    this.crosshairStroke(centerX, centerY - size, centerX, centerY - 4*size);
+    this.crosshairStroke(centerX + size, centerY, centerX + 4 * size, centerY);
+    this.crosshairStroke(centerX - size, centerY, centerX - 4 * size, centerY);
+    this.crosshairStroke(centerX, centerY + size, centerX, centerY + 4 * size);
+    this.crosshairStroke(centerX, centerY - size, centerX, centerY - 4 * size);
   }
 
   render3D() {
     let q = this.myShip.quaternion;
-    this.camera.setRotationFromQuaternion(new THREE.Quaternion(q._x, q._y, q._z, q._w));
+    this.camera.setRotationFromQuaternion(
+      new THREE.Quaternion(q._x, q._y, q._z, q._w),
+    );
 
     this.camera.position.x = this.myShip.position.x;
     this.camera.position.y = this.myShip.position.y;
@@ -285,29 +312,50 @@ class Renderer {
   }
 
   vectorToString(vector) {
-    return "{" + vector.x.toFixed(2) + ", " + vector.y.toFixed(2) + ", " + vector.z.toFixed(2) + "}";
+    return (
+      '{' +
+      vector.x.toFixed(2) +
+      ', ' +
+      vector.y.toFixed(2) +
+      ', ' +
+      vector.z.toFixed(2) +
+      '}'
+    );
   }
 
   quaternionToString(quaternion) {
-    return "{" + quaternion._x.toFixed(2) + ", " + quaternion._y.toFixed(2) + ", " + quaternion._z.toFixed(2) + ", " + quaternion._w.toFixed(2) + "}";
+    return (
+      '{' +
+      quaternion._x.toFixed(2) +
+      ', ' +
+      quaternion._y.toFixed(2) +
+      ', ' +
+      quaternion._z.toFixed(2) +
+      ', ' +
+      quaternion._w.toFixed(2) +
+      '}'
+    );
   }
 
   renderScoreboard() {
-    this.hudContext.font = "32px Arial";
-    this.hudContext.fillStyle = "white";
-    this.hudContext.textAlign = "start";
-    this.hudContext.textBaseline = "top";
+    this.hudContext.font = '32px Arial';
+    this.hudContext.fillStyle = 'white';
+    this.hudContext.textAlign = 'start';
+    this.hudContext.textBaseline = 'top';
 
-    this.hudContext.fillText("Scoreboard", 10, 10);
-
+    this.hudContext.fillText('Scoreboard', 10, 10);
 
     let scores = [];
-    scores.push([this.myShip.hue, this.myShip.username+"(you)", Math.round(this.myShip.score)]);
-    for (const [shipId, ship] of Object.entries(this.ships)) {
+    scores.push([
+      this.myShip.hue,
+      this.myShip.username + '(you)',
+      Math.round(this.myShip.score),
+    ]);
+    for (const ship of Object.values(this.ships)) {
       scores.push([ship.hue, ship.username, Math.round(ship.score)]);
     }
 
-    scores.sort((a,b) => {
+    scores.sort((a, b) => {
       return b[2] - a[2];
     });
 
@@ -316,60 +364,112 @@ class Renderer {
     for (const scoreboardData of scores) {
       currentHeight += 32;
       this.hudContext.fillStyle = `hsl(${scoreboardData[0]}, 100%, 50%)`;
-      this.hudContext.fillText(`${scoreboardData[1]}: ${scoreboardData[2]}`, 10, currentHeight);
+      this.hudContext.fillText(
+        `${scoreboardData[1]}: ${scoreboardData[2]}`,
+        10,
+        currentHeight,
+      );
     }
   }
 
   renderDebug(fps) {
-    this.hudContext.textBaseline = "bottom";
+    this.hudContext.textBaseline = 'bottom';
 
     const height = this.hudCanvas.height;
 
-    this.hudContext.fillText("FPS: " + Math.round(fps), 5, height - 85);
-    this.hudContext.fillText("Postition: " + this.vectorToString(this.myShip.position), 5, height - 65);
-    this.hudContext.fillText("Velocity: " + this.vectorToString(this.myShip.velocity), 5, height - 45);
-    this.hudContext.fillText("Rotation Velocity: " + this.vectorToString(this.myShip.rotateVelocity), 5, height - 25);
-    this.hudContext.fillText("Orientation: " + this.quaternionToString(this.myShip.quaternion), 5, height - 5);
+    this.hudContext.fillText('FPS: ' + Math.round(fps), 5, height - 85);
+    this.hudContext.fillText(
+      'Postition: ' + this.vectorToString(this.myShip.position),
+      5,
+      height - 65,
+    );
+    this.hudContext.fillText(
+      'Velocity: ' + this.vectorToString(this.myShip.velocity),
+      5,
+      height - 45,
+    );
+    this.hudContext.fillText(
+      'Rotation Velocity: ' + this.vectorToString(this.myShip.rotateVelocity),
+      5,
+      height - 25,
+    );
+    this.hudContext.fillText(
+      'Orientation: ' + this.quaternionToString(this.myShip.quaternion),
+      5,
+      height - 5,
+    );
   }
 
   renderBars() {
     const w = this.hudCanvas.width;
     const h = this.hudCanvas.height;
 
-    const barWidth = w/4;
-    const barHeight = h/20;
+    const barWidth = w / 4;
+    const barHeight = h / 20;
 
     const barBorder = 2;
 
-    const healthBarWidth = barWidth * this.myShip.health / this.myShip.maxHealth;
-    const energyBarWidth = barWidth * this.myShip.energy / this.myShip.maxEnergy;
+    const healthBarWidth =
+      (barWidth * this.myShip.health) / this.myShip.maxHealth;
+    const energyBarWidth =
+      (barWidth * this.myShip.energy) / this.myShip.maxEnergy;
 
-    this.hudContext.fillStyle = "white";
-    this.hudContext.fillRect(w/2 - barWidth/2 - barBorder, h - 3*barHeight - barBorder, barWidth+2*barBorder, 2*barHeight+3*barBorder);
+    this.hudContext.fillStyle = 'white';
+    this.hudContext.fillRect(
+      w / 2 - barWidth / 2 - barBorder,
+      h - 3 * barHeight - barBorder,
+      barWidth + 2 * barBorder,
+      2 * barHeight + 3 * barBorder,
+    );
 
-    this.hudContext.fillStyle = "red";
-    this.hudContext.fillRect(w/2 - barWidth/2, h-3*barHeight, Math.round(healthBarWidth), barHeight);
+    this.hudContext.fillStyle = 'red';
+    this.hudContext.fillRect(
+      w / 2 - barWidth / 2,
+      h - 3 * barHeight,
+      Math.round(healthBarWidth),
+      barHeight,
+    );
 
-    this.hudContext.fillStyle = "yellow";
-    this.hudContext.fillRect(w/2 - barWidth/2, h-2*barHeight+barBorder, Math.round(energyBarWidth), barHeight);
+    this.hudContext.fillStyle = 'yellow';
+    this.hudContext.fillRect(
+      w / 2 - barWidth / 2,
+      h - 2 * barHeight + barBorder,
+      Math.round(energyBarWidth),
+      barHeight,
+    );
 
-    this.hudContext.font = "24px Arial";
-    this.hudContext.fillStyle = "black";
-    this.hudContext.textAlign = "center";
-    this.hudContext.textBaseline = "middle";
+    this.hudContext.font = '24px Arial';
+    this.hudContext.fillStyle = 'black';
+    this.hudContext.textAlign = 'center';
+    this.hudContext.textBaseline = 'middle';
 
-    this.hudContext.fillText(`${Math.round(this.myShip.health)}/${Math.round(this.myShip.maxHealth)}`, w/2, h-2.5*barHeight);
-    this.hudContext.fillText(`${Math.round(this.myShip.energy)}/${Math.round(this.myShip.maxEnergy)}`, w/2, h-1.5*barHeight+barBorder);
+    this.hudContext.fillText(
+      `${Math.round(this.myShip.health)}/${Math.round(this.myShip.maxHealth)}`,
+      w / 2,
+      h - 2.5 * barHeight,
+    );
+    this.hudContext.fillText(
+      `${Math.round(this.myShip.energy)}/${Math.round(this.myShip.maxEnergy)}`,
+      w / 2,
+      h - 1.5 * barHeight + barBorder,
+    );
   }
 
   renderHUD(fps) {
-    this.hudContext.clearRect(0, 0, this.hudCanvas.width, this.hudCanvas.height);
+    this.hudContext.clearRect(
+      0,
+      0,
+      this.hudCanvas.width,
+      this.hudCanvas.height,
+    );
     this.renderCrosshair();
     this.hudTexture.needsUpdate = true;
 
     this.renderBars();
     this.renderScoreboard();
-    //this.renderDebug(fps);
+    if (DEBUG) {
+      this.renderDebug(fps);
+    }
 
     this.renderer.render(this.sceneHUD, this.cameraHUD);
   }
@@ -381,13 +481,16 @@ class Renderer {
     this.lastDts.push(dt);
     let fps = this.lastDts.length / this.lastDts.reduce((sum, dt) => sum + dt);
 
-    for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
+    for (const asteroid of Object.values(this.asteroids)) {
       asteroid.update(dt);
       asteroid.mesh.position.copy(asteroid.position);
-      asteroid.mesh.rotateOnAxis(asteroid.rotationAxis, asteroid.rotationSpeed*dt);
+      asteroid.mesh.rotateOnAxis(
+        asteroid.rotationAxis,
+        asteroid.rotationSpeed * dt,
+      );
     }
 
-    for (const [bulletId, bullet] of Object.entries(this.bullets)) {
+    for (const bullet of Object.values(this.bullets)) {
       bullet.update(dt);
       bullet.mesh.position.copy(bullet.position);
     }
@@ -396,7 +499,10 @@ class Renderer {
       ship.update(dt);
 
       let currentQuaternion = ship.quaternion.clone();
-      currentQuaternion.multiplyQuaternions(currentQuaternion, (new THREE.Quaternion(-1,0,0,1)).normalize());
+      currentQuaternion.multiplyQuaternions(
+        currentQuaternion,
+        new THREE.Quaternion(-1, 0, 0, 1).normalize(),
+      );
       this.ships[playerId].mesh.setRotationFromQuaternion(currentQuaternion);
 
       ship.mesh.position.copy(ship.position);
@@ -416,8 +522,8 @@ class Renderer {
     this.render3D();
     this.renderHUD(fps);
 
-    requestAnimationFrame((timestamp) => this.renderLoop(timestamp, ts));
+    requestAnimationFrame(timestamp => this.renderLoop(timestamp, ts));
   }
 }
 
-module.exports = Renderer;
+export default Renderer;

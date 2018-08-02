@@ -1,7 +1,5 @@
-const THREE = require('three');
-const Ship = require('./ship.js');
-const Bullet = require('./bullet.js');
-const Asteroid = require('./asteroid.js');
+import Ship from './ship.js';
+import Asteroid from './asteroid.js';
 
 class Engine {
   constructor(config) {
@@ -12,7 +10,7 @@ class Engine {
     this.bullets = {};
 
     this.currentAsteroidId = 0;
-    this.asteroids = this.generateAsteroids(this.config["numOfAsteroids"]);
+    this.asteroids = this.generateAsteroids(this.config['numOfAsteroids']);
 
     this.newBullets = [];
     this.removedBullets = [];
@@ -23,23 +21,33 @@ class Engine {
   }
 
   validateData(data) {
-    const username = data["username"];
-    const hue = parseInt(data["hue"]) || 0;
-    const maxVelocity = parseInt(data["maxVelocity"]) || 0;
-    const acceleration = parseInt(data["acceleration"]) || 0;
-    const maxRotateVelocity = parseInt(data["maxRotateVelocity"]) || 0;
-    const rotateAcceleration = parseInt(data["rotateAcceleration"]) || 0;
-    const maxHealth = parseInt(data["maxHealth"]) || 0;
-    const passiveHealthRegen = parseInt(data["passiveHealthRegen"]) || 0;
-    const activeHealthRegen = parseInt(data["activeHealthRegen"]) || 0;
-    const maxEnergy = parseInt(data["maxEnergy"]) || 0;
-    const energyRegen = parseInt(data["energyRegen"]) || 0;
-    const fireRate = parseInt(data["fireRate"]) || 0;
+    const username = data['username'];
+    const hue = parseInt(data['hue']) || 0;
+    const maxVelocity = parseInt(data['maxVelocity']) || 0;
+    const acceleration = parseInt(data['acceleration']) || 0;
+    const maxRotateVelocity = parseInt(data['maxRotateVelocity']) || 0;
+    const rotateAcceleration = parseInt(data['rotateAcceleration']) || 0;
+    const maxHealth = parseInt(data['maxHealth']) || 0;
+    const passiveHealthRegen = parseInt(data['passiveHealthRegen']) || 0;
+    const activeHealthRegen = parseInt(data['activeHealthRegen']) || 0;
+    const maxEnergy = parseInt(data['maxEnergy']) || 0;
+    const energyRegen = parseInt(data['energyRegen']) || 0;
+    const fireRate = parseInt(data['fireRate']) || 0;
 
-    if (RegExp(/^[a-z0-9]+$/i).test(username) &&
-      maxVelocity + acceleration + maxRotateVelocity +
-      rotateAcceleration + maxHealth + passiveHealthRegen +
-      activeHealthRegen + maxEnergy + energyRegen + fireRate <= 20) {
+    if (
+      RegExp(/^[a-z0-9]+$/i).test(username) &&
+      maxVelocity +
+        acceleration +
+        maxRotateVelocity +
+        rotateAcceleration +
+        maxHealth +
+        passiveHealthRegen +
+        activeHealthRegen +
+        maxEnergy +
+        energyRegen +
+        fireRate <=
+        20
+    ) {
       return {
         username,
         hue,
@@ -52,32 +60,46 @@ class Engine {
         activeHealthRegen,
         maxEnergy,
         energyRegen,
-        fireRate
-      }
+        fireRate,
+      };
     } else return false;
   }
 
   addShip(playerId, data) {
-    const username = data["username"];
-    const hue = data["hue"];
+    const username = data['username'];
+    const hue = data['hue'];
 
-    const shipStats = this.config["shipStats"];
+    const shipStats = this.config['shipStats'];
 
-    const maxVelocity = shipStats["maxVelocity"][data["maxVelocity"]];
-    const acceleration = shipStats["acceleration"][data["acceleration"]];
-    const maxRotateVelocity = shipStats["maxRotateVelocity"][data["maxRotateVelocity"]];
-    const rotateAcceleration = shipStats["rotateAcceleration"][data["rotateAcceleration"]];
-    const maxHealth = shipStats["maxHealth"][data["maxHealth"]];
-    const passiveHealthRegen = shipStats["passiveHealthRegen"][data["passiveHealthRegen"]];
-    const activeHealthRegen = shipStats["activeHealthRegen"][data["activeHealthRegen"]];
-    const maxEnergy = shipStats["maxEnergy"][data["maxEnergy"]];
-    const energyRegen = shipStats["energyRegen"][data["energyRegen"]];
-    const fireRate = shipStats["fireRate"][data["fireRate"]];
+    const maxVelocity = shipStats['maxVelocity'][data['maxVelocity']];
+    const acceleration = shipStats['acceleration'][data['acceleration']];
+    const maxRotateVelocity =
+      shipStats['maxRotateVelocity'][data['maxRotateVelocity']];
+    const rotateAcceleration =
+      shipStats['rotateAcceleration'][data['rotateAcceleration']];
+    const maxHealth = shipStats['maxHealth'][data['maxHealth']];
+    const passiveHealthRegen =
+      shipStats['passiveHealthRegen'][data['passiveHealthRegen']];
+    const activeHealthRegen =
+      shipStats['activeHealthRegen'][data['activeHealthRegen']];
+    const maxEnergy = shipStats['maxEnergy'][data['maxEnergy']];
+    const energyRegen = shipStats['energyRegen'][data['energyRegen']];
+    const fireRate = shipStats['fireRate'][data['fireRate']];
 
     this.ships[playerId] = Ship.randomShip(
-      username, hue, maxVelocity, acceleration, maxRotateVelocity, rotateAcceleration,
-      maxHealth, passiveHealthRegen, activeHealthRegen,
-      maxEnergy, energyRegen, fireRate);
+      username,
+      hue,
+      maxVelocity,
+      acceleration,
+      maxRotateVelocity,
+      rotateAcceleration,
+      maxHealth,
+      passiveHealthRegen,
+      activeHealthRegen,
+      maxEnergy,
+      energyRegen,
+      fireRate,
+    );
   }
 
   removeShip(playerId) {
@@ -85,15 +107,21 @@ class Engine {
   }
 
   generateAsteroids(n) {
-    const maxDistance = this.config["mapRadius"];
-    const radiusMin = this.config["randomAsteroid"]["radiusMin"];
-    const radiusMax = this.config["randomAsteroid"]["radiusMax"];
-    const velocityMin = this.config["randomAsteroid"]["velocityMin"];
-    const velocityMax = this.config["randomAsteroid"]["velocityMax"];
+    const maxDistance = this.config['mapRadius'];
+    const radiusMin = this.config['randomAsteroid']['radiusMin'];
+    const radiusMax = this.config['randomAsteroid']['radiusMax'];
+    const velocityMin = this.config['randomAsteroid']['velocityMin'];
+    const velocityMax = this.config['randomAsteroid']['velocityMax'];
 
-    let asteroids = {}
+    let asteroids = {};
     for (let i = 0; i < n; i++) {
-      asteroids[this.currentAsteroidId] = Asteroid.generateRandom(maxDistance-radiusMax, radiusMin, radiusMax, velocityMin, velocityMax);
+      asteroids[this.currentAsteroidId] = Asteroid.generateRandom(
+        maxDistance - radiusMax,
+        radiusMin,
+        radiusMax,
+        velocityMin,
+        velocityMax,
+      );
       this.currentAsteroidId++;
     }
 
@@ -101,11 +129,25 @@ class Engine {
   }
 
   splitAsteroid(asteroid) {
-    const velocityMin = this.config["randomAsteroid"]["velocityMin"];
-    const velocityMax = this.config["randomAsteroid"]["velocityMax"];
+    const velocityMin = this.config['randomAsteroid']['velocityMin'];
+    const velocityMax = this.config['randomAsteroid']['velocityMax'];
 
-    const asteroid1 = Asteroid.generateRandom(asteroid.radius, asteroid.radius/3, asteroid.radius/2, velocityMin, velocityMax, asteroid.position.clone());
-    const asteroid2 = Asteroid.generateRandom(asteroid.radius, asteroid.radius/3, asteroid.radius/2, velocityMin, velocityMax, asteroid.position.clone());
+    const asteroid1 = Asteroid.generateRandom(
+      asteroid.radius,
+      asteroid.radius / 3,
+      asteroid.radius / 2,
+      velocityMin,
+      velocityMax,
+      asteroid.position.clone(),
+    );
+    const asteroid2 = Asteroid.generateRandom(
+      asteroid.radius,
+      asteroid.radius / 3,
+      asteroid.radius / 2,
+      velocityMin,
+      velocityMax,
+      asteroid.position.clone(),
+    );
 
     this.asteroids[this.currentAsteroidId] = asteroid1;
     this.newAsteroids.push(this.currentAsteroidId);
@@ -117,20 +159,22 @@ class Engine {
   }
 
   update(dt) {
-    const mapRadius = this.config["mapRadius"];
+    const mapRadius = this.config['mapRadius'];
 
     for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
       asteroid.update(dt);
 
       if (asteroid.position.length() + asteroid.radius > mapRadius) {
-        asteroid.position.normalize().multiplyScalar(mapRadius-asteroid.radius);
+        asteroid.position
+          .normalize()
+          .multiplyScalar(mapRadius - asteroid.radius);
         asteroid.velocity.multiplyScalar(-1);
         this.updateAsteroids.push(asteroidId);
       }
     }
 
     for (const [playerId, ship] of Object.entries(this.ships)) {
-      if(ship.canFire()) {
+      if (ship.canFire()) {
         this.bullets[this.currentBulletId] = ship.fire(playerId);
         this.newBullets.push(this.currentBulletId);
         this.currentBulletId++;
@@ -138,7 +182,7 @@ class Engine {
       ship.update(dt);
 
       if (ship.position.length() > mapRadius) {
-        ship.takeDamage(10*dt);
+        ship.takeDamage(10 * dt);
       }
     }
 
@@ -152,7 +196,13 @@ class Engine {
 
       let shipHit = false;
       for (const [shipId, ship] of Object.entries(this.ships)) {
-        if ((bullet.position.clone().sub(ship.position.clone())).length() <= 10 && shipId != bullet.playerId) {
+        if (
+          bullet.position
+            .clone()
+            .sub(ship.position.clone())
+            .length() <= 10 &&
+          shipId != bullet.playerId
+        ) {
           if (ship.takeDamage(50)) {
             this.ships[bullet.playerId].score += 1;
           }
@@ -166,7 +216,12 @@ class Engine {
       if (shipHit) continue;
 
       for (const [asteroidId, asteroid] of Object.entries(this.asteroids)) {
-        if ((bullet.position.clone().sub(asteroid.position.clone())).length() <= asteroid.radius) {
+        if (
+          bullet.position
+            .clone()
+            .sub(asteroid.position.clone())
+            .length() <= asteroid.radius
+        ) {
           if (asteroid.radius > 10) {
             this.splitAsteroid(asteroid);
           }
@@ -227,8 +282,15 @@ class Engine {
       updateShips[shipId] = ship.serialize();
     }
 
-    return [newBullets, newAsteroids, this.removedBullets, this.removedAsteroids, updateAsteroids, updateShips];
+    return [
+      newBullets,
+      newAsteroids,
+      this.removedBullets,
+      this.removedAsteroids,
+      updateAsteroids,
+      updateShips,
+    ];
   }
 }
 
-module.exports = Engine;
+export default Engine;

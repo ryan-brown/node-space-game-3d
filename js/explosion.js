@@ -1,5 +1,5 @@
-const THREE = require('three');
-const Util = require('./util.js');
+import * as THREE from 'three';
+import Util from './util.js';
 
 class Explosion {
   constructor(position) {
@@ -8,7 +8,10 @@ class Explosion {
 
     this.particleGeometry = new THREE.Geometry();
     this.addParticles(position);
-    let particleMaterial = new THREE.PointsMaterial({color: 0xffff00, size: 1});
+    let particleMaterial = new THREE.PointsMaterial({
+      color: 0xffff00,
+      size: 1,
+    });
     this.mesh = new THREE.Points(this.particleGeometry, particleMaterial);
   }
 
@@ -24,10 +27,14 @@ class Explosion {
     this.lifetime -= dt;
     for (var p = 0; p < this.particleCount; p++) {
       const particle = this.particleGeometry.vertices[p];
-      particle.add(particle.velocity.clone().multiplyScalar(dt*((1+this.lifetime)/4)));
+      particle.add(
+        particle.velocity
+          .clone()
+          .multiplyScalar(dt * ((1 + this.lifetime) / 4)),
+      );
     }
     this.particleGeometry.verticesNeedUpdate = true;
   }
 }
 
-module.exports = Explosion;
+export default Explosion;
