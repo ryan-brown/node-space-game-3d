@@ -1,18 +1,20 @@
+/* eslint-env node */
 const port = process.env.PORT || 8090;
 
-var http = require('http').createServer().listen(port, function() {
+import http from 'http';
+import socketio from 'socket.io';
+import Engine from './js/engine.js';
+import config from './js/config.js';
+
+var server = http.createServer().listen(port, function() {
   console.log('Game server listening on port ' + port);
 });
-var io = require('socket.io').listen(http);
-
-var Engine = require('./js/engine.js');
-var config = require('./js/config.js');
-
+var io = socketio.listen(server);
 let engine = new Engine(config);
 
 io.on('connection', function(socket) {
   socket.on('start', function(data) {
-    console.log(`user ${data["username"]} connected`);
+    console.log(`user ${data['username']} connected`);
 
     let validatedData = engine.validateData(data);
     if (validatedData) {
@@ -24,7 +26,9 @@ io.on('connection', function(socket) {
     }
 
     socket.on('keyup', function(data) {
-      engine.ships[socket.id].keysPressed = engine.ships[socket.id].keysPressed.filter(x => x != data);
+      engine.ships[socket.id].keysPressed = engine.ships[
+        socket.id
+      ].keysPressed.filter(x => x != data);
     });
 
     socket.on('keydown', function(data) {
@@ -45,14 +49,15 @@ let timeTilEmit = 0;
 let lastTime = process.hrtime();
 setInterval(() => {
   const currTime = process.hrtime();
-  const dt = currTime[0]-lastTime[0] + (currTime[1]-lastTime[1])/NS_PER_SEC;
+  const dt =
+    currTime[0] - lastTime[0] + (currTime[1] - lastTime[1]) / NS_PER_SEC;
   lastTime = currTime;
 
   engine.update(dt);
 
   timeTilEmit -= dt;
   if (timeTilEmit <= 0) {
-    timeTilEmit = 1/EMITS_PER_SECOND;
+    timeTilEmit = 1 / EMITS_PER_SECOND;
 
     io.sockets.emit('update', engine.updateSerialize());
 

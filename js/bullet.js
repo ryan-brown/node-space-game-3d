@@ -1,4 +1,4 @@
-const THREE = require('three');
+import * as THREE from 'three';
 
 class Bullet {
   constructor(playerId, position, velocity) {
@@ -14,23 +14,35 @@ class Bullet {
   }
 
   serialize() {
-    let bulletData = `${this.playerId},`
-    bulletData += `${this.position.x.toFixed(3)},${this.position.y.toFixed(3)},${this.position.z.toFixed(3)},`;
-    bulletData += `${this.velocity.x.toFixed(3)},${this.velocity.y.toFixed(3)},${this.velocity.z.toFixed(3)}`;
+    let bulletData = `${this.playerId},`;
+    bulletData += `${this.position.x.toFixed(3)},${this.position.y.toFixed(
+      3,
+    )},${this.position.z.toFixed(3)},`;
+    bulletData += `${this.velocity.x.toFixed(3)},${this.velocity.y.toFixed(
+      3,
+    )},${this.velocity.z.toFixed(3)}`;
 
     return bulletData;
   }
 
   static deserialize(data) {
-    const bulletData = data.split(",");
+    const bulletData = data.split(',');
     const playerId = bulletData[0];
     const bulletFloats = bulletData.slice(1).map(v => parseFloat(v));
 
-    const position = new THREE.Vector3(bulletFloats[0], bulletFloats[1], bulletFloats[2]);
-    const velocity = new THREE.Vector3(bulletFloats[3], bulletFloats[4], bulletFloats[5]);
+    const position = new THREE.Vector3(
+      bulletFloats[0],
+      bulletFloats[1],
+      bulletFloats[2],
+    );
+    const velocity = new THREE.Vector3(
+      bulletFloats[3],
+      bulletFloats[4],
+      bulletFloats[5],
+    );
 
-    return new Bullet(playerId, position, velocity)
+    return new Bullet(playerId, position, velocity);
   }
 }
 
-module.exports = Bullet;
+export default Bullet;
